@@ -1,0 +1,65 @@
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryException;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.InsertAllRequest;
+import com.google.cloud.bigquery.InsertAllResponse;
+import com.google.cloud.bigquery.TableId;
+import com.google.cloud.pubsub.v1.Publisher;
+import com.google.pubsub.v1.ProjectTopicName;
+import com.google.pubsub.v1.PubsubMessage;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
+@Service
+public class PubSubBigQueryService {
+
+    private final Publisher publisher;
+    private final BigQuery bigQuery;
+    private final String topicName = "your-topic-name";
+    private final String datasetName = "your-dataset-name";
+    private final String tableName = "your-table-name";
+
+    public PubSubBigQueryService() throws Exception {
+        this.publisher = Publisher.newBuilder(ProjectTopicName.of("your-project-id", topicName)).build();
+        this.bigQuery = BigQueryOptions.getDefaultInstance().getService();
+    }
+
+    public void publishMessage(Map<String, Object> data) throws ExecutionException, InterruptedException {
+        String dataJson = convertDataToJson(data);
+        PubsubMessage message = PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8(dataJson)).build();
+        publisher.publish(message).get();
+    }
+
+    public void processMessage(String dataJson) {
+        Map<String, Object> data = convertJsonToData(dataJson);
+        insertDataIntoBigQuery(data);
+    }
+
+    private void insertDataIntoBigQuery(Map<String, Object> data) {
+        try {
+            TableId tableId = TableId.of(datasetName, tableName);
+            InsertAllResponse response = bigQuery.insertAll(
+                    InsertAllRequest.newBuilder(tableId)
+                            .addRow(data)
+                            .build()
+            );
+
+            if (response.hasErrors()) {
+                // Handle errors
+            }
+        } catch (BigQueryException e) {
+            // Handle exception
+        }
+    }
+
+    private String convertDataToJson(Map<String, Object> data) {
+        // Convert data map to JSON string
+    }
+
+    private Map<String, Object> convertJsonToData(String json) {
+        // Convert JSON string to data map
+    }
+}
