@@ -4,14 +4,14 @@ import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.bigquery.Job;
 import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.LoadJobConfiguration;
+import com.google.cloud.bigquery.JobConfiguration;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 @Service
@@ -26,10 +26,10 @@ public class GcsBigQueryService {
         TableId tableId = TableId.of(datasetName, tableName);
         String gcsUri = String.format("gs://%s/%s", bucketName, fileName);
 
+        LoadJobConfiguration loadConfig = LoadJobConfiguration.newBuilder(tableId, gcsUri).build();
+
         Job job = bigQuery.create(
-                JobInfo.newBuilder()
-                        .setConfiguration(JobInfo.ofLoad(tableId, gcsUri))
-                        .build()
+                JobInfo.newBuilder(loadConfig).build()
         );
 
         try {
