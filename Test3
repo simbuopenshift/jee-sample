@@ -2,59 +2,55 @@ import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.BigQueryOptions;
 import com.google.cloud.bigquery.Job;
+import com.google.cloud.bigquery.JobId;
 import com.google.cloud.bigquery.JobInfo;
+import com.google.cloud.bigquery.JobStatistics;
 import com.google.cloud.bigquery.TableId;
-import com.google.cloud.bigquery.LoadJobConfiguration;
-import com.google.cloud.bigquery.JobConfiguration;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 @Service
-public class GcsBigQueryService {
+public class GcsToBigQueryService {
 
     private final Storage storage = StorageOptions.getDefaultInstance().getService();
-    private final BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+    private final BigQuery bigquery = BigQueryOptions.getDefaultInstance().getService();
     private final String bucketName = "your-gcs-bucket-name";
-    private final String fileName = "your-file-name.csv"; // Assuming CSV file
+    private final String datasetName = "your-bigquery-dataset-name";
+    private final String tableName = "your-bigquery-table-name";
 
-    public void bulkLoadFromGcsToBigQuery(String datasetName, String tableName) throws IOException {
-        TableId tableId = TableId.of(datasetName, tableName);
-        String gcsUri = String.format("gs://%s/%s", bucketName, fileName);
-
-        LoadJobConfiguration loadConfig = LoadJobConfiguration.newBuilder(tableId, gcsUri).build();
-
-        Job job = bigQuery.create(
-                JobInfo.newBuilder(loadConfig).build()
-        );
-
-        try {
-            job = job.waitFor();
-            if (job == null) {
-                throw new RuntimeException("Job no longer exists");
-            } else if (job.getStatus().getError() != null) {
-                throw new RuntimeException(job.getStatus().getError().toString());
-            }
-        } catch (BigQueryException | InterruptedException e) {
-            throw new RuntimeException("Error loading data from GCS to BigQuery", e);
-        }
-    }
-
-    public void downloadFileFromGcs() throws IOException {
+    public void loadFileFromGcsToBigQuery(String fileName) throws IOException {
+        // Get GCS blob
         Blob blob = storage.get(bucketName, fileName);
-        if (blob == null) {
-            throw new IOException("File not found in GCS");
+
+        // Configure BigQuery job
+        TableId tableId = TableId.of(datasetName, tableName);
+        JobId jobId = JobId.of();
+        Job loadJob = bigquery.create(JobInfo.of(
+                JobInfo.newBuilder(LoadJobConfiguration.newBuilder(tableId)
+                        .setSourceFormat(FormatOptions.csv())
+                        .setAutodetect(true)
+                        .build())
+                        .setJobId(jobId)
+                        .build(),
+                blob.getBlobId()));
+
+        // Wait for the job to complete
+        try {
+            loadJob = loadJob.waitFor();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted while waiting for job to complete.", e);
         }
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(blob.reader(), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Process each line of the file
-            }
+        // Check the job's status
+        if (loadJob != null && loadJob.getStatus().getError() == null) {
+            JobStatistics.LoadStatistics statistics = loadJob.getStatistics();
+            System.out.println("Load statistics: " + statistics.toString());
+        } else {
+            throw new RuntimeException("BigQuery job failed");
         }
     }
 }
