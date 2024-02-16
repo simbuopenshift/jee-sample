@@ -1,0 +1,60 @@
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryException;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.Job;
+import com.google.cloud.bigquery.JobInfo;
+import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.JobConfiguration;
+import com.google.cloud.bigquery.JobConfigurationLoad;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+@Service
+public class GcsBigQueryService {
+
+    private final Storage storage = StorageOptions.getDefaultInstance().getService();
+    private final BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+    private final String bucketName = "your-gcs-bucket-name";
+    private final String fileName = "your-file-name.csv"; // Assuming CSV file
+
+    public void bulkLoadFromGcsToBigQuery(String datasetName, String tableName) throws IOException {
+        TableId tableId = TableId.of(datasetName, tableName);
+        String gcsUri = String.format("gs://%s/%s", bucketName, fileName);
+
+        JobConfigurationLoad loadConfig = JobConfigurationLoad.newBuilder(tableId, gcsUri).build();
+
+        Job job = bigQuery.create(
+                JobInfo.newBuilder(loadConfig).build()
+        );
+
+        try {
+            job = job.waitFor();
+            if (job == null) {
+                throw new RuntimeException("Job no longer exists");
+            } else if (job.getStatus().getError() != null) {
+                throw new RuntimeException(job.getStatus().getError().toString());
+            }
+        } catch (BigQueryException | InterruptedException e) {
+            throw new RuntimeException("Error loading data from GCS to BigQuery", e);
+        }
+    }
+
+    public void downloadFileFromGcs() throws IOException {
+        Blob blob = storage.get(bucketName, fileName);
+        if (blob == null) {
+            throw new IOException("File not found in GCS");
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(blob.reader(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Process each line of the file
+            }
+        }
+    }
+}
