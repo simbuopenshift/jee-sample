@@ -1,0 +1,54 @@
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryException;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.Job;
+import com.google.cloud.bigquery.JobId;
+import com.google.cloud.bigquery.JobInfo;
+import com.google.cloud.bigquery.JobStatistics.LoadStatistics;
+import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.JobInfo.WriteDisposition;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import org.springframework.stereotype.Service;
+import java.io.IOException;
+
+@Service
+public class GcsToBigQueryService {
+
+    private final Storage storage = StorageOptions.getDefaultInstance().getService();
+    private final BigQuery bigquery = BigQueryOptions.getDefaultInstance().getService();
+    private final String bucketName = "your-gcs-bucket-name";
+    private final String datasetName = "your-bigquery-dataset-name";
+    private final String tableName = "your-bigquery-table-name";
+
+    public void loadFileFromGcsToBigQuery(String fileName) throws IOException {
+        // Get GCS blob
+        Blob blob = storage.get(bucketName, fileName);
+
+        // Configure BigQuery job
+        TableId tableId = TableId.of(datasetName, tableName);
+        WriteDisposition disposition = WriteDisposition.WRITE_APPEND; // Change if needed
+        JobId jobId = JobId.of();
+        Job job = bigquery.create(JobInfo.of(
+            JobInfo.newBuilder(loadConfig)
+                .setJobId(jobId)
+                .setDestinationTable(tableId)
+                .setSourceFormat(JobInfo.SourceFormat.CSV)
+                .setWriteDisposition(disposition)
+                .build(),
+            blob.getBlobId()));
+
+        // Wait for the job to complete
+        job.waitFor();
+
+        // Check the job's status
+        if (job.isDone()) {
+            LoadStatistics statistics = job.getStatistics();
+            System.out.println("Load statistics: " + statistics.toString());
+        } else {
+            throw new RuntimeException("BigQuery job failed");
+        }
+    }
+}
