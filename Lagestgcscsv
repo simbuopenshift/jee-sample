@@ -1,5 +1,6 @@
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.springframework.boot.SpringApplication;
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.ArrayList;
@@ -59,7 +62,13 @@ public class GCSAccessApplication {
         // Upload CSV file to GCS bucket
         String destinationBlobName = folder1 + "/" + folder2 + "/" + fileName;
         BlobId blobId = BlobId.of(bucketName, destinationBlobName);
-        Blob blob = storage.create(blobId, Files.readAllBytes(Paths.get(fileName)));
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+        try {
+            Blob blob = storage.create(blobInfo, Files.readAllBytes(Paths.get(fileName)));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "Failed to upload CSV file to GCS bucket";
+        }
         return "CSV file created and uploaded successfully to GCS bucket.";
     }
 
