@@ -1,0 +1,78 @@
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.InsertAllRequest;
+import com.google.cloud.bigquery.InsertAllResponse;
+import com.google.cloud.bigquery.TableId;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@SpringBootApplication
+public class BulkLoadApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(BulkLoadApplication.class, args);
+
+        // Your list of POJOs
+        List<YourPojo> pojoList = getPojoList();
+
+        // Convert POJOs to Map
+        List<Map<String, Object>> dataList = convertPojoListToMapList(pojoList);
+
+        // Your Google BigQuery configuration
+        String projectId = "your-project-id";
+        String datasetName = "your-dataset-name";
+        String tableName = "your-table-name";
+
+        BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+        TableId tableId = TableId.of(projectId, datasetName, tableName);
+
+        InsertAllRequest.Builder builder = InsertAllRequest.newBuilder(tableId);
+        for (Map<String, Object> data : dataList) {
+            builder.addRow(data);
+        }
+
+        InsertAllResponse response = bigQuery.insertAll(builder.build());
+        if (response.hasErrors()) {
+            // Handle errors
+            System.err.println("Errors occurred while inserting data:");
+            response.getInsertErrors().forEach((row, errors) -> {
+                errors.forEach(error -> System.err.println(error));
+            });
+        } else {
+            System.out.println("Data successfully inserted into BigQuery table.");
+        }
+    }
+
+    private static List<YourPojo> getPojoList() {
+        // Your method to fetch or generate the POJO list
+        // Example:
+        // List<YourPojo> pojoList = ...;
+        return pojoList;
+    }
+
+    private static List<Map<String, Object>> convertPojoListToMapList(List<? extends Object> pojoList) {
+        List<Map<String, Object>> dataList = new ArrayList<>();
+        for (Object pojo : pojoList) {
+            Map<String, Object> data = new HashMap<>();
+            Class<?> pojoClass = pojo.getClass();
+            Field[] fields = pojoClass.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true);
+                try {
+                    Object value = field.get(pojo);
+                    data.put(field.getName(), value);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+            dataList.add(data);
+        }
+        return dataList;
+    }
+}
