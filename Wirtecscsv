@@ -10,6 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
@@ -29,7 +30,10 @@ public class GCSAccessApplication {
         String folder2 = "folder2";
 
         // Get list of objects from subfolders
-        List<Blob> blobs = storage.list(bucketName, Storage.BlobListOption.prefix(folder1 + "/" + folder2 + "/")).getValues();
+        List<Blob> blobs = new ArrayList<>();
+        for (Blob blob : storage.list(bucketName, Storage.BlobListOption.prefix(folder1 + "/" + folder2 + "/")).iterateAll()) {
+            blobs.add(blob);
+        }
 
         // Prepare data
         List<YourPojo> yourPojoList = prepareData(); // Implement this method to prepare your data
@@ -43,8 +47,8 @@ public class GCSAccessApplication {
             // Write data
             for (YourPojo pojo : yourPojoList) {
                 writer.append(pojo.getField1()).append("|")
-                      .append(pojo.getField2()).append("|")
-                      .append(pojo.getField3()).append("\n");
+                        .append(pojo.getField2()).append("|")
+                        .append(pojo.getField3()).append("\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
