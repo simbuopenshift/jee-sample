@@ -1,0 +1,52 @@
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.InsertAllRequest;
+import com.google.cloud.bigquery.InsertAllResponse;
+import com.google.cloud.bigquery.TableId;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import java.util.List;
+import java.util.Map;
+
+@SpringBootApplication
+public class BulkLoadApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(BulkLoadApplication.class, args);
+        
+        // Your data list
+        List<Map<String, Object>> dataList = getDataList();
+        
+        // Your Google BigQuery configuration
+        String projectId = "your-project-id";
+        String datasetName = "your-dataset-name";
+        String tableName = "your-table-name";
+
+        BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+        TableId tableId = TableId.of(projectId, datasetName, tableName);
+
+        InsertAllRequest.Builder builder = InsertAllRequest.newBuilder(tableId);
+        for (Map<String, Object> data : dataList) {
+            builder.addRow(data);
+        }
+
+        InsertAllResponse response = bigQuery.insertAll(builder.build());
+        if (response.hasErrors()) {
+            // Handle errors
+            System.err.println("Errors occurred while inserting data:");
+            response.getInsertErrors().forEach((row, errors) -> {
+                errors.forEach(error -> System.err.println(error));
+            });
+        } else {
+            System.out.println("Data successfully inserted into BigQuery table.");
+        }
+    }
+
+    private static List<Map<String, Object>> getDataList() {
+        // Your method to fetch or generate the data list
+        // Example:
+        // List<Map<String, Object>> dataList = ...;
+        return dataList;
+    }
+}
