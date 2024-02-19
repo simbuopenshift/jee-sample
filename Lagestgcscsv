@@ -1,0 +1,73 @@
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
+
+@SpringBootApplication
+@RestController
+public class GCSAccessApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(GCSAccessApplication.class, args);
+    }
+
+    @GetMapping("/createCsv")
+    public String createCsv() {
+        // Set up GCS client
+        Storage storage = StorageOptions.getDefaultInstance().getService();
+        String bucketName = "your_bucket_name";
+        String folder1 = "folder1";
+        String folder2 = "folder2";
+
+        // Get list of objects from subfolders
+        List<Blob> blobs = new ArrayList<>();
+        for (Blob blob : storage.list(bucketName, Storage.BlobListOption.prefix(folder1 + "/" + folder2 + "/")).iterateAll()) {
+            blobs.add(blob);
+        }
+
+        // Prepare data
+        List<YourPojo> yourPojoList = prepareData(); // Implement this method to prepare your data
+
+        // Create CSV file
+        String fileName = "data_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".csv";
+        try (FileWriter writer = new FileWriter(fileName)) {
+            // Write custom headers
+            writer.append("Header1|Header2|Header3\n");
+
+            // Write data
+            for (YourPojo pojo : yourPojoList) {
+                writer.append(pojo.getField1()).append("|")
+                        .append(pojo.getField2()).append("|")
+                        .append(pojo.getField3()).append("\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "Failed to create CSV file";
+        }
+
+        // Upload CSV file to GCS bucket
+        String destinationBlobName = folder1 + "/" + folder2 + "/" + fileName;
+        BlobId blobId = BlobId.of(bucketName, destinationBlobName);
+        Blob blob = storage.create(blobId, Files.readAllBytes(Paths.get(fileName)));
+        return "CSV file created and uploaded successfully to GCS bucket.";
+    }
+
+    // Define your POJO class here
+
+    // Implement method to prepare data
+    private List<YourPojo> prepareData() {
+        // Implement this method to prepare your data
+        return null;
+    }
+}
