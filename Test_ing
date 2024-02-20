@@ -1,8 +1,6 @@
 import com.google.cloud.bigquery.*;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -27,47 +25,27 @@ public class BigQueryService {
     }
 
     private void insertBatch(BigQuery bigQuery, List<Map<String, Object>> batch) {
-        String csvData = convertToCSV(batch);
         try {
             String jobId = UUID.randomUUID().toString();
             TableId tableId = TableId.of(PROJECT_ID, DATASET_ID, TABLE_ID);
 
-            Job job = bigQuery.create(JobInfo.of(JobId.of(jobId),
-                    LoadJobConfiguration.newBuilder(tableId)
-                            .setFormatOptions(FormatOptions.csv())
-                            .build()));
-
-            // Provide data to the job
-            ByteArrayInputStream contentStream = new ByteArrayInputStream(csvData.getBytes(StandardCharsets.UTF_8));
-            Job loadJob = job.load(contentStream);
-
-            // Wait for the job to complete
-            loadJob = loadJob.waitFor();
-            if (loadJob.getStatus().getError() != null) {
-                throw new BigQueryException(500, "Error loading data into BigQuery: " + loadJob.getStatus().getError());
+            InsertAllRequest.Builder builder = InsertAllRequest.newBuilder(tableId);
+            for (Map<String, Object> row : batch) {
+                builder.addRow(row);
             }
 
-            System.out.println("Batch inserted successfully.");
-        } catch (InterruptedException | BigQueryException e) {
+            InsertAllResponse response = bigQuery.insertAll(builder.build());
+
+            if (response.hasErrors()) {
+                // Handle errors
+                for (Map.Entry<Long, List<BigQueryError>> entry : response.getInsertErrors().entrySet()) {
+                    System.out.println("Errors for row " + entry.getKey() + ": " + entry.getValue());
+                }
+            } else {
+                System.out.println("Batch inserted successfully.");
+            }
+        } catch (BigQueryException e) {
             System.out.println("Error inserting data: " + e.getMessage());
         }
-    }
-
-    private String convertToCSV(List<Map<String, Object>> data) {
-        StringBuilder csv = new StringBuilder();
-        // Assuming all rows have the same columns in the same order
-        if (!data.isEmpty()) {
-            Map<String, Object> firstRow = data.get(0);
-            firstRow.keySet().forEach(column -> csv.append(column).append(","));
-            csv.deleteCharAt(csv.length() - 1); // Remove trailing comma
-            csv.append("\n");
-        }
-
-        for (Map<String, Object> row : data) {
-            row.values().forEach(value -> csv.append(value).append(","));
-            csv.deleteCharAt(csv.length() - 1); // Remove trailing comma
-            csv.append("\n");
-        }
-        return csv.toString();
     }
 }
