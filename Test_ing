@@ -1,14 +1,7 @@
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.BigQueryException;
-import com.google.cloud.bigquery.BigQueryOptions;
-import com.google.cloud.bigquery.CsvOptions;
-import com.google.cloud.bigquery.Job;
-import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.*;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -23,42 +16,44 @@ public class BigQueryService {
     private static final int BATCH_SIZE = 1000; // Adjust batch size as needed
 
     public void insertData(List<Map<String, Object>> data) {
-        BigQuery bigquery = BigQueryOptions.newBuilder().setProjectId(PROJECT_ID).build().getService();
+        BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
 
         // Split data into batches
         for (int i = 0; i < data.size(); i += BATCH_SIZE) {
             int endIndex = Math.min(i + BATCH_SIZE, data.size());
             List<Map<String, Object>> batch = data.subList(i, endIndex);
-            insertBatch(bigquery, batch);
+            insertBatch(bigQuery, batch);
         }
     }
 
-    private void insertBatch(BigQuery bigquery, List<Map<String, Object>> batch) {
+    private void insertBatch(BigQuery bigQuery, List<Map<String, Object>> batch) {
         String csvData = convertToCSV(batch);
         try {
             String jobId = UUID.randomUUID().toString();
             TableId tableId = TableId.of(PROJECT_ID, DATASET_ID, TABLE_ID);
 
-            JobInfo jobInfo = JobInfo.newBuilder(tableId)
-                    .setJobId(jobId)
-                    .setLoadJobConfiguration(JobInfo.LoadJobConfiguration.newBuilder()
-                            .setFormatOptions(CsvOptions.newBuilder().setFieldDelimiter(",").build())
+            Job job = bigQuery.create(JobInfo.newBuilder(
+                    LoadJobConfiguration.newBuilder(tableId)
+                            .setFormatOptions(FormatOptions.csv())
+                            .setJobId(jobId)
                             .build())
-                    .build();
-
-            Job job = bigquery.create(jobInfo);
+                    .build());
 
             // Provide data to the job
-            job = job.load("data.csv", new ByteArrayInputStream(csvData.getBytes(StandardCharsets.UTF_8)));
+            Job loadJob = job.load(
+                    LoadJobConfiguration.newBuilder(tableId)
+                            .setFormatOptions(FormatOptions.csv())
+                            .build(),
+                    new ByteArrayInputStream(csvData.getBytes(StandardCharsets.UTF_8)));
 
             // Wait for the job to complete
-            job = job.waitFor();
-            if (job.getStatus().getError() != null) {
-                throw new BigQueryException(500, "Error loading data into BigQuery: " + job.getStatus().getError());
+            loadJob = loadJob.waitFor();
+            if (loadJob.getStatus().getError() != null) {
+                throw new BigQueryException(500, "Error loading data into BigQuery: " + loadJob.getStatus().getError());
             }
 
             System.out.println("Batch inserted successfully.");
-        } catch (InterruptedException | IOException | BigQueryException e) {
+        } catch (InterruptedException | BigQueryException e) {
             System.out.println("Error inserting data: " + e.getMessage());
         }
     }
