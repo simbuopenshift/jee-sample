@@ -1,0 +1,25 @@
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.InsertAllRequest;
+import com.google.cloud.bigquery.InsertAllResponse;
+import com.google.cloud.bigquery.TableId;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class BigQueryService {
+
+    @Autowired
+    private BigQuery bigQuery;
+
+    public void insertDataIntoBigQuery(String datasetId, String tableId, List<Map<String, Object>> data) {
+        TableId table = TableId.of(datasetId, tableId);
+        InsertAllRequest.Builder builder = InsertAllRequest.newBuilder(table);
+        data.forEach(row -> builder.addRow(row));
+        InsertAllRequest request = builder.build();
+        InsertAllResponse response = bigQuery.insertAll(request);
+        // Handle response if needed
+    }
+}
