@@ -1,38 +1,81 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.InsertAllRequest;
-import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.InsertAllResponse;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import static org.mockito.Mockito.*;
+import com.google.cloud.bigquery.TableId;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
-public class BigQueryInsertTest {
+@Service
+public class BigQueryService {
 
-    @Mock
+    @Autowired
     private BigQuery bigQuery;
 
-    @Before
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
+    // Split data into batches to avoid exceeding request size limit
+    private List<List<Map<String, Object>>> splitIntoBatches(List<Map<String, Object>> data, int batchSize) {
+        List<List<Map<String, Object>>> batches = new ArrayList<>();
+        for (int i = 0; i < data.size(); i += batchSize) {
+            batches.add(data.subList(i, Math.min(i + batchSize, data.size())));
+        }
+        return batches;
     }
 
-    @Test
-    public void testInsertAll() {
-        TableId tableId = TableId.of("your_dataset", "your_table");
-        InsertAllResponse response = InsertAllResponse.newBuilder().build();
+    public void insertDataIntoBigQuery(String datasetId, String tableId, List<Map<String, Object>> data) {
+        TableId table = TableId.of(datasetId, tableId);
+        int batchSize = 1000; // Adjust batch size as needed
+        List<List<Map<String, Object>>> batches = splitIntoBatches(data, batchSize);
+
+        for (List<Map<String, Object>> batch : batches) {
+            try {
+                // Compress batch data
+                List<Map<String, Object>> compressedRows = new ArrayList<>();
+                for (Map<String, Object> row : batch) {
+                    compressedRows.add(compressRow(row));
+                }
+
+                // Create InsertAllRequest with compressed data
+                InsertAllRequest.Builder builder = InsertAllRequest.newBuilder(table);
+                for (Map<String, Object> compressedRow : compressedRows) {
+                    builder.addRow(compressedRow);
+                }
+                InsertAllRequest request = builder.build();
+
+                // Insert data
+                InsertAllResponse response = bigQuery.insertAll(request);
+                // Handle response if needed
+            } catch (IOException e) {
+                // Handle compression error
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private Map<String, Object> compressRow(Map<String, Object> row) throws IOException {
+        // Convert row to JSON and compress
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(row);
+        byte[] compressedBytes = compressData(json.getBytes());
         
-        when(bigQuery.insertAll(any(InsertAllRequest.class))).thenReturn(response);
-        
-        // Your test logic here
-        
-        // Example: Call the method that inserts into BigQuery
-        // InsertAllResponse insertResponse = yourClass.insertDataIntoBigQuery(bigQuery);
-        
-        // Verify that insertAll method is called with the correct parameters
-        // verify(bigQuery).insertAll(any(InsertAllRequest.class));
+        // Create new Map with compressed data
+        Map<String, Object> compressedRow = new HashMap<>();
+        compressedRow.put("compressed_data", compressedBytes);
+        return compressedRow;
+    }
+
+    private byte[] compressData(byte[] data) throws IOException {
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        try (GZIPOutputStream gzipStream = new GZIPOutputStream(byteStream)) {
+            gzipStream.write(data);
+        }
+        return byteStream.toByteArray();
     }
 }
