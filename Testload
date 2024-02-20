@@ -1,0 +1,60 @@
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.InsertAllRequest;
+import com.google.cloud.bigquery.InsertAllResponse;
+import com.google.cloud.bigquery.TableId;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@SpringBootApplication
+public class BigQueryInsertApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(BigQueryInsertApplication.class, args);
+
+        // Create BigQuery client
+        BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+
+        // Sample data generation
+        List<Map<String, Object>> data = generateSampleData(300000);
+
+        // Insert data into BigQuery table
+        insertDataIntoBigQuery(bigQuery, "your_project_id", "your_dataset", "your_table", data);
+    }
+
+    private static List<Map<String, Object>> generateSampleData(int numRecords) {
+        List<Map<String, Object>> data = new ArrayList<>();
+        for (int i = 0; i < numRecords; i++) {
+            Map<String, Object> record = new HashMap<>();
+            record.put("id", i);
+            record.put("value", "Value_" + i);
+            data.add(record);
+        }
+        return data;
+    }
+
+    private static void insertDataIntoBigQuery(BigQuery bigQuery, String projectId, String datasetId, String tableId, List<Map<String, Object>> data) {
+        TableId table = TableId.of(projectId, datasetId, tableId);
+
+        List<InsertAllRequest.RowToInsert> rows = new ArrayList<>();
+        for (Map<String, Object> record : data) {
+            InsertAllRequest.RowToInsert row = InsertAllRequest.RowToInsert.of(record);
+            rows.add(row);
+        }
+
+        InsertAllResponse response = bigQuery.insertAll(InsertAllRequest.newBuilder(table).addRows(rows).build());
+        if (response.hasErrors()) {
+            System.err.println("Errors occurred while inserting data:");
+            response.getInsertErrors().forEach((rowId, errors) -> {
+                errors.forEach(error -> System.err.println("Error for row " + rowId + ": " + error.toString()));
+            });
+        } else {
+            System.out.println("Data inserted successfully into BigQuery table.");
+        }
+    }
+}
