@@ -1,81 +1,78 @@
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.InsertAllRequest;
-import com.google.cloud.bigquery.InsertAllResponse;
+import com.google.cloud.bigquery.BigQueryException;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.CsvOptions;
+import com.google.cloud.bigquery.Job;
+import com.google.cloud.bigquery.JobInfo;
 import com.google.cloud.bigquery.TableId;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPOutputStream;
+import java.util.UUID;
 
 @Service
 public class BigQueryService {
 
-    @Autowired
-    private BigQuery bigQuery;
+    private static final String PROJECT_ID = "your-project-id";
+    private static final String DATASET_ID = "your-dataset-id";
+    private static final String TABLE_ID = "your-table-id";
+    private static final int BATCH_SIZE = 1000; // Adjust batch size as needed
 
-    // Split data into batches to avoid exceeding request size limit
-    private List<List<Map<String, Object>>> splitIntoBatches(List<Map<String, Object>> data, int batchSize) {
-        List<List<Map<String, Object>>> batches = new ArrayList<>();
-        for (int i = 0; i < data.size(); i += batchSize) {
-            batches.add(data.subList(i, Math.min(i + batchSize, data.size())));
+    public void insertData(List<Map<String, Object>> data) {
+        BigQuery bigquery = BigQueryOptions.newBuilder().setProjectId(PROJECT_ID).build().getService();
+
+        // Split data into batches
+        for (int i = 0; i < data.size(); i += BATCH_SIZE) {
+            int endIndex = Math.min(i + BATCH_SIZE, data.size());
+            List<Map<String, Object>> batch = data.subList(i, endIndex);
+            insertBatch(bigquery, batch);
         }
-        return batches;
     }
 
-    public void insertDataIntoBigQuery(String datasetId, String tableId, List<Map<String, Object>> data) {
-        TableId table = TableId.of(datasetId, tableId);
-        int batchSize = 1000; // Adjust batch size as needed
-        List<List<Map<String, Object>>> batches = splitIntoBatches(data, batchSize);
+    private void insertBatch(BigQuery bigquery, List<Map<String, Object>> batch) {
+        String csvData = convertToCSV(batch);
+        try {
+            String jobId = UUID.randomUUID().toString();
+            TableId tableId = TableId.of(PROJECT_ID, DATASET_ID, TABLE_ID);
 
-        for (List<Map<String, Object>> batch : batches) {
-            try {
-                // Compress batch data
-                List<Map<String, Object>> compressedRows = new ArrayList<>();
-                for (Map<String, Object> row : batch) {
-                    compressedRows.add(compressRow(row));
-                }
+            Job job = bigquery.create(JobInfo.newBuilder(JobInfo.of(tableId))
+                    .setLoadJobConfig(JobInfo.LoadJobConfiguration.newBuilder(new ByteArrayInputStream(csvData.getBytes(StandardCharsets.UTF_8)))
+                            .setFormatOptions(CsvOptions.newBuilder().setFieldDelimiter(",").build())
+                            .build())
+                    .setJobId(jobId)
+                    .build());
 
-                // Create InsertAllRequest with compressed data
-                InsertAllRequest.Builder builder = InsertAllRequest.newBuilder(table);
-                for (Map<String, Object> compressedRow : compressedRows) {
-                    builder.addRow(compressedRow);
-                }
-                InsertAllRequest request = builder.build();
-
-                // Insert data
-                InsertAllResponse response = bigQuery.insertAll(request);
-                // Handle response if needed
-            } catch (IOException e) {
-                // Handle compression error
-                e.printStackTrace();
+            // Wait for the job to complete
+            job.waitFor();
+            if (job.getStatus().getError() != null) {
+                throw new BigQueryException(500, "Error loading data into BigQuery: " + job.getStatus().getError());
             }
+
+            System.out.println("Batch inserted successfully.");
+        } catch (InterruptedException | IOException | BigQueryException e) {
+            System.out.println("Error inserting data: " + e.getMessage());
         }
     }
 
-    private Map<String, Object> compressRow(Map<String, Object> row) throws IOException {
-        // Convert row to JSON and compress
-        ObjectMapper objectMapper = new ObjectMapper();
-        String json = objectMapper.writeValueAsString(row);
-        byte[] compressedBytes = compressData(json.getBytes());
-        
-        // Create new Map with compressed data
-        Map<String, Object> compressedRow = new HashMap<>();
-        compressedRow.put("compressed_data", compressedBytes);
-        return compressedRow;
-    }
-
-    private byte[] compressData(byte[] data) throws IOException {
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        try (GZIPOutputStream gzipStream = new GZIPOutputStream(byteStream)) {
-            gzipStream.write(data);
+    private String convertToCSV(List<Map<String, Object>> data) {
+        StringBuilder csv = new StringBuilder();
+        // Assuming all rows have the same columns in the same order
+        if (!data.isEmpty()) {
+            Map<String, Object> firstRow = data.get(0);
+            firstRow.keySet().forEach(column -> csv.append(column).append(","));
+            csv.deleteCharAt(csv.length() - 1); // Remove trailing comma
+            csv.append("\n");
         }
-        return byteStream.toByteArray();
+
+        for (Map<String, Object> row : data) {
+            row.values().forEach(value -> csv.append(value).append(","));
+            csv.deleteCharAt(csv.length() - 1); // Remove trailing comma
+            csv.append("\n");
+        }
+        return csv.toString();
     }
 }
