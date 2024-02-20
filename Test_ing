@@ -39,15 +39,20 @@ public class BigQueryService {
             String jobId = UUID.randomUUID().toString();
             TableId tableId = TableId.of(PROJECT_ID, DATASET_ID, TABLE_ID);
 
-            Job job = bigquery.create(JobInfo.newBuilder(JobInfo.of(tableId))
-                    .setLoadJobConfig(JobInfo.LoadJobConfiguration.newBuilder(new ByteArrayInputStream(csvData.getBytes(StandardCharsets.UTF_8)))
+            JobInfo jobInfo = JobInfo.newBuilder(tableId)
+                    .setJobId(jobId)
+                    .setLoadJobConfiguration(JobInfo.LoadJobConfiguration.newBuilder()
                             .setFormatOptions(CsvOptions.newBuilder().setFieldDelimiter(",").build())
                             .build())
-                    .setJobId(jobId)
-                    .build());
+                    .build();
+
+            Job job = bigquery.create(jobInfo);
+
+            // Provide data to the job
+            job = job.load("data.csv", new ByteArrayInputStream(csvData.getBytes(StandardCharsets.UTF_8)));
 
             // Wait for the job to complete
-            job.waitFor();
+            job = job.waitFor();
             if (job.getStatus().getError() != null) {
                 throw new BigQueryException(500, "Error loading data into BigQuery: " + job.getStatus().getError());
             }
