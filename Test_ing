@@ -1,0 +1,38 @@
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.InsertAllRequest;
+import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.InsertAllResponse;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import static org.mockito.Mockito.*;
+
+import java.util.Map;
+
+public class BigQueryInsertTest {
+
+    @Mock
+    private BigQuery bigQuery;
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @Test
+    public void testInsertAll() {
+        TableId tableId = TableId.of("your_dataset", "your_table");
+        InsertAllResponse response = InsertAllResponse.newBuilder().build();
+        
+        when(bigQuery.insertAll(any(InsertAllRequest.class))).thenReturn(response);
+        
+        // Your test logic here
+        
+        // Example: Call the method that inserts into BigQuery
+        // InsertAllResponse insertResponse = yourClass.insertDataIntoBigQuery(bigQuery);
+        
+        // Verify that insertAll method is called with the correct parameters
+        // verify(bigQuery).insertAll(any(InsertAllRequest.class));
+    }
+}
