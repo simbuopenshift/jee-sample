@@ -6,37 +6,37 @@ public class BigQueryService {
 
     private static final String PROJECT_ID = "your-project-id";
     private static final String DATASET_ID = "your-dataset-id";
-    private static final String OTHER_TABLE_ID = "other-table-id";
+    private static final String TABLE_ID = "your-table-id";
 
-    public void insertData(List<Map<String, Object>> data) {
-        // Existing code to insert data into the main table...
-    }
-
-    public void insertSingleRecordPojo(MyPojo pojo) {
-        BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
-
+    public void insertPojoIntoBigQuery(MyPojo pojo) {
         try {
-            // Define the table ID for the other table
-            TableId tableId = TableId.of(PROJECT_ID, DATASET_ID, OTHER_TABLE_ID);
+            // Initialize BigQuery client
+            BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
 
-            // Map MyPojo fields to BigQuery fields
-            InsertAllRequest.RowToInsert rowToInsert = InsertAllRequest.RowToInsert.of(pojo.getId(), pojo.getField1(), pojo.getField2(), ...);
-            InsertAllRequest insertRequest = InsertAllRequest.of(tableId, rowToInsert);
+            // Define the table ID
+            TableId tableId = TableId.of(PROJECT_ID, DATASET_ID, TABLE_ID);
 
-            // Insert the row into the other table
-            InsertAllResponse response = bigQuery.insertAll(insertRequest);
+            // Create a TableRow from the MyPojo object
+            TableRow row = new TableRow();
+            row.set("id", pojo.getId());
+            row.set("field1", pojo.getField1());
+            row.set("field2", pojo.getField2());
 
-            // Handle response as needed (check for errors, etc.)
+            // Insert the row into the table
+            InsertAllResponse response = bigQuery.insertAll(
+                InsertAllRequest.newBuilder(tableId).addRow(row).build());
+
+            // Check for errors
             if (response.hasErrors()) {
-                // Handle errors
+                System.out.println("Errors occurred while inserting the row:");
                 for (Map.Entry<Long, List<BigQueryError>> entry : response.getInsertErrors().entrySet()) {
-                    System.out.println("Errors for row " + entry.getKey() + ": " + entry.getValue());
+                    System.out.println("Row " + entry.getKey() + " had errors: " + entry.getValue());
                 }
             } else {
-                System.out.println("Single record inserted successfully into other table.");
+                System.out.println("Row inserted successfully into BigQuery table.");
             }
         } catch (BigQueryException e) {
-            System.out.println("Error inserting single record: " + e.getMessage());
+            System.out.println("Error inserting row into BigQuery: " + e.getMessage());
         }
     }
 }
