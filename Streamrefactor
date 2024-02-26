@@ -1,0 +1,69 @@
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryException;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.FieldValue;
+import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.TableResult;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.stream.Collectors;
+
+@SpringBootApplication
+public class BigQueryToGCSApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(BigQueryToGCSApplication.class, args);
+    }
+
+    public void fetchDataAndSaveToGCS() {
+        // Set up BigQuery client
+        BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+
+        // Set up GCS client
+        Storage storage = StorageOptions.getDefaultInstance().getService();
+
+        // Define BigQuery query
+        String query = "SELECT * FROM `your_project.your_dataset.your_table`";
+
+        // Execute BigQuery query
+        try {
+            QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query).build();
+            TableResult results = bigQuery.query(queryConfig);
+
+            // Generate CSV content with header
+            StringBuilder csvContent = new StringBuilder();
+            results.getSchema().getFields().forEach(field -> csvContent.append(field.getName()).append(","));
+            csvContent.append("\n");
+            
+            // Add rows
+            results.iterateAll().forEach(row -> {
+                String rowValues = row.stream()
+                        .map(FieldValue::toString)
+                        .collect(Collectors.joining(","));
+                csvContent.append(rowValues).append("\n");
+            });
+
+            // Save CSV to GCS with timestamp
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            String timestamp = dateFormat.format(new Date());
+            String fileName = "data_" + timestamp + ".csv";
+            BlobId blobId = BlobId.of("your_bucket_name", "subfolder/" + fileName);
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+            Blob blob = storage.create(blobInfo, csvContent.toString().getBytes(StandardCharsets.UTF_8));
+
+            System.out.println("CSV file saved to: " + blob.getName());
+        } catch (BigQueryException | IOException e) {
+            System.out.println("Error fetching data from BigQuery: " + e.getMessage());
+        }
+    }
+}
