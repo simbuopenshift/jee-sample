@@ -1,7 +1,7 @@
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryException;
 import com.google.cloud.bigquery.BigQueryOptions;
-import com.google.cloud.bigquery.FieldValueList;
+import com.google.cloud.bigquery.FieldValue;
 import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.TableResult;
 import com.google.cloud.storage.Blob;
@@ -43,8 +43,13 @@ public class BigQueryToGCSApplication {
             StringBuilder csvContent = new StringBuilder();
             for (FieldValueList row : results.iterateAll()) {
                 // Format row data as CSV
-                // Assuming here that each row is a comma-separated list of values
-                csvContent.append(String.join(",", row.getValues())).append("\n");
+                StringBuilder rowData = new StringBuilder();
+                for (FieldValue fieldValue : row) {
+                    // Append each field value to the row data
+                    rowData.append(fieldValue.toString()).append(",");
+                }
+                // Remove trailing comma and append new line
+                csvContent.append(rowData.substring(0, rowData.length() - 1)).append("\n");
             }
 
             // Save CSV to GCS with timestamp
