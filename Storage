@@ -6,14 +6,13 @@ import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.TableResult;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -41,15 +40,9 @@ public class BigQueryToGCSApplication {
 
             // Generate CSV content
             StringBuilder csvContent = new StringBuilder();
-            for (FieldValueList row : results.iterateAll()) {
+            for (FieldValue row : results.iterateAll()) {
                 // Format row data as CSV
-                StringBuilder rowData = new StringBuilder();
-                for (FieldValue fieldValue : row) {
-                    // Append each field value to the row data
-                    rowData.append(fieldValue.toString()).append(",");
-                }
-                // Remove trailing comma and append new line
-                csvContent.append(rowData.substring(0, rowData.length() - 1)).append("\n");
+                csvContent.append(row.toString()).append("\n");
             }
 
             // Save CSV to GCS with timestamp
@@ -57,7 +50,8 @@ public class BigQueryToGCSApplication {
             String timestamp = dateFormat.format(new Date());
             String fileName = "data_" + timestamp + ".csv";
             BlobId blobId = BlobId.of("your_bucket_name", "subfolder/" + fileName);
-            Blob blob = storage.create(blobId, csvContent.toString().getBytes());
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+            Blob blob = storage.create(blobInfo, csvContent.toString().getBytes());
 
             System.out.println("CSV file saved to: " + blob.getName());
         } catch (BigQueryException | IOException e) {
