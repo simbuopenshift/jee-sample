@@ -48,7 +48,8 @@ public class BigQueryToGCSApplication {
             // Add rows
             results.iterateAll().forEach(row -> {
                 String rowValues = row.stream()
-                        .map(FieldValue::toString)
+                        .map(FieldValue::getValue)
+                        .map(Object::toString)  // Convert to string
                         .collect(Collectors.joining(","));
                 csvContent.append(rowValues).append("\n");
             });
