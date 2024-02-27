@@ -1,0 +1,28 @@
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+public class GcsExample {
+    public void countRows(String bucketName, String fileName) {
+        // Initialize Storage service
+        Storage storage = StorageOptions.getDefaultInstance().getService();
+
+        // Get the Blob using BlobId
+        Blob blob = storage.get(BlobId.of(bucketName, fileName));
+
+        // Read the content of the Blob
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(blob.getContent()))) {
+            int rowCount = 0;
+            while (reader.readLine() != null) {
+                rowCount++;
+            }
+            // Print the total count of rows
+            System.out.println("Total count of rows: " + rowCount);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
