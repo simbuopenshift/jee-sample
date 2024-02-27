@@ -1,0 +1,21 @@
+// Check if the destination table exists
+TableId tableId = TableId.of(datasetname, tablename);
+Table table = bigQuery.getTable(tableId);
+
+if (table != null) {
+    // Table exists, create the job configuration to insert data
+    QueryJobConfiguration job = 
+        QueryJobConfiguration.newBuilder(query)
+            .setWriteDisposition(JobInfo.WriteDisposition.WRITE_APPEND)
+            .setDestinationTable(tableId)
+            .setAllowLargeResults(true)
+            .build();
+
+    // Execute the job with the created job configuration
+    Job jobResult = bigQuery.create(JobInfo.of(job));
+    // Handle job result as needed
+} else {
+    // Table does not exist, handle the case accordingly
+    System.out.println("Destination table does not exist.");
+    // You may choose to create the table or take other actions here
+}
