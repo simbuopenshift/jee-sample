@@ -1,1 +1,1 @@
-String selectQuery = "SELECT CONCAT('{ \"', " + key[0] + ", '\": \"', " + sourceColumn[0] + ", '\", \"', " + key[1] + ", '\": \"', " + sourceColumn[1] + ", '\" }') AS data";
+String selectQuery = "SELECT CONCAT('{ \"" + key[0] + "\": \"', " + sourceColumn[0] + ", '\", \"" + key[1] + "\": \"', " + sourceColumn[1] + ", '\" }') AS data";
