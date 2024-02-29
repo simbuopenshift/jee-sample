@@ -1,9 +1,15 @@
 String selectQuery = "SELECT role as roles, " +
                     "TO_JSON_STRING(STRUCT(" +
                     "'" + key[0] + "' as " + key[0] + ", " +
+                    "'" + sourceColumn[0] + "' as " + sourceColumn[0] + ", " +
                     "'" + key[1] + "' as " + key[1] + ", " +
+                    "'" + sourceColumn[1] + "' as " + sourceColumn[1] + ", " +
                     "'" + key[2] + "' as " + key[2] + ", " +
+                    "'" + sourceColumn[2] + "' as " + sourceColumn[2] + ", " +
                     "'" + key[3] + "' as " + key[3] + ", " +
+                    "'" + sourceColumn[3] + "' as " + sourceColumn[3] + ", " +
                     "'" + key[4] + "' as " + key[4] + ", " +
-                    "'" + key[5] + "' as " + key[5] + ")) AS data " +
+                    "'" + sourceColumn[4] + "' as " + sourceColumn[4] + ", " +
+                    "'" + key[5] + "' as " + key[5] + ", " +
+                    "'" + sourceColumn[5] + "' as " + sourceColumn[5] + ")) AS data " +
                     "FROM your_table_name";
