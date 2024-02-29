@@ -1,0 +1,21 @@
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+// Assuming `storage` and `blobInfo` are already initialized
+// Assuming `csvContent` is a StringBuilder containing CSV data
+// Assuming `csvFileName` is the name of the CSV file
+
+ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+    zipOutputStream.putNextEntry(new ZipEntry(csvFileName));
+    zipOutputStream.write(csvContent.toString().getBytes());
+    zipOutputStream.closeEntry();
+}
+
+Blob blob = storage.create(
+    blobInfo,
+    outputStream.toByteArray()
+);
