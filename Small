@@ -1,0 +1,13 @@
+import java.io.ByteArrayOutputStream;
+import java.util.zip.GZIPOutputStream;
+
+// Assuming `storage` and `blobInfo` are already initialized
+ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+    gzipOutputStream.write(csvContent.toString().getBytes());
+}
+
+Blob blob = storage.create(
+    blobInfo,
+    outputStream.toByteArray()
+);
