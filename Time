@@ -1,0 +1,1 @@
+LocalDateTime.now(ZoneId.of("UTC")).atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ofPattern("MMDDYYYY"));
