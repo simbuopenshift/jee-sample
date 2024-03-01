@@ -1,0 +1,23 @@
+import java.util.LinkedHashMap;
+
+// Create a LinkedHashMap to maintain insertion order
+LinkedHashMap<String, String> keyValueMap = new LinkedHashMap<>();
+
+// Populate the map with key-value pairs
+for (int i = 0; i < key.length; i++) {
+    keyValueMap.put(key[i], sourceColumn[i]);
+}
+
+// Build the JSON string
+StringBuilder jsonBuilder = new StringBuilder("{");
+for (String k : keyValueMap.keySet()) {
+    jsonBuilder.append("\"").append(k).append("\":\"").append(keyValueMap.get(k)).append("\",");
+}
+// Remove the trailing comma
+if (jsonBuilder.length() > 1) {
+    jsonBuilder.setLength(jsonBuilder.length() - 1);
+}
+jsonBuilder.append("}");
+
+// Construct the SELECT query
+String selectQuery = "SELECT PARSE_JSON('" + jsonBuilder.toString() + "') AS data";
