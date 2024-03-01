@@ -1,0 +1,12 @@
+// Build the JSON string manually
+StringBuilder jsonBuilder = new StringBuilder("{");
+for (int i = 0; i < key.length; i++) {
+    if (i > 0) {
+        jsonBuilder.append(",");
+    }
+    jsonBuilder.append("\"").append(key[i]).append("\":\"").append(sourceColumn[i]).append("\"");
+}
+jsonBuilder.append("}");
+
+// Construct the SELECT query with PARSE_JSON
+String selectQuery = "SELECT PARSE_JSON('" + jsonBuilder.toString() + "') AS data";
