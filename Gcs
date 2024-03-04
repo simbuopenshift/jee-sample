@@ -1,0 +1,27 @@
+import com.google.cloud.bigquery.ExtractJobConfiguration;
+import com.google.cloud.bigquery.Field;
+import com.google.cloud.bigquery.FieldList;
+import com.google.cloud.bigquery.TableId;
+import com.google.cloud.bigquery.BigQuery;
+
+// Assuming you have already initialized 'bigquery', 'tableId', 'destinationUri', 'compressed', and 'dataformat'
+
+// Get the schema of the table to identify the column names
+FieldList schema = bigquery.getTable(tableId).getDefinition().getSchema();
+
+// Choose the column you want to export
+String columnName = "column_name";
+
+// Find the Field object corresponding to the selected column
+Field selectedField = schema.get(columnName);
+
+// Prepare headers
+String headers = columnName + "\n";
+
+// Build the ExtractJobConfiguration with the selected column and headers
+ExtractJobConfiguration config = ExtractJobConfiguration.newBuilder(tableId, destinationUri)
+        .setHeader(headers)
+        .setSelectedFields(selectedField)
+        .setCompression(compressed)
+        .setFormat(dataformat)
+        .build();
