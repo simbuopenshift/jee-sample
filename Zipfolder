@@ -1,4 +1,7 @@
 import com.google.cloud.storage.BlobInfo;
+import java.io.ByteArrayOutputStream;
+import java.util.zip.ZipOutputStream;
+import java.util.zip.ZipEntry;
 
 // Assuming `storage` is already initialized
 // Assuming `csvContent` is a StringBuilder containing CSV data
@@ -6,11 +9,19 @@ import com.google.cloud.storage.BlobInfo;
 
 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
-    ZipEntry entry = new ZipEntry("folder/" + csvFileName); // Specify a folder name
+    // Create a folder entry in the ZIP file
+    zipOutputStream.putNextEntry(new ZipEntry("folder/"));
+    zipOutputStream.closeEntry();
+
+    // Create a file entry in the ZIP file with ".txt" extension
+    ZipEntry entry = new ZipEntry("folder/" + csvFileName + ".txt");
     zipOutputStream.putNextEntry(entry);
     zipOutputStream.write(csvContent.toString().getBytes());
     zipOutputStream.closeEntry();
 }
+
+// Specify the filename with ".zip" extension
+String zipFileName = csvFileName + ".zip";
 
 BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, zipFileName)
     .setContentType("application/zip") // Set content type to indicate it's a zip file
