@@ -3,4 +3,5 @@ String selectQuery = "SELECT CAST(CONCAT('{ \"" + key[0] + "\": \"', " + sourceC
                     + key[2] + "\": \"', " + sourceColumn[2] + ", '\", \"" 
                     + key[3] + "\": \"', " + sourceColumn[3] + ", '\", \"" 
                     + key[4] + "\": \"', " + sourceColumn[4] + ", '\", \"" 
-                    + key[5] + "\": \"', " + sourceColumn[5] + ", '\" }' AS JSON) AS data";
+                    + key[5] + "\": \"', " + sourceColumn[5] + ", '\", \"" 
+                    + "new_column" + "\": TIMESTAMP(\"', CURRENT_TIMESTAMP(), '\") }' AS JSON) AS data";
