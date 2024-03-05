@@ -1,7 +1,11 @@
-String selectQuery = "SELECT CAST(CONCAT('{ \"" + key[0] + "\": \"', " + sourceColumn[0] + ", '\", \"" 
-                    + key[1] + "\": \"', " + sourceColumn[1] + ", '\", \"" 
-                    + key[2] + "\": \"', " + sourceColumn[2] + ", '\", \"" 
-                    + key[3] + "\": \"', " + sourceColumn[3] + ", '\", \"" 
-                    + key[4] + "\": \"', " + sourceColumn[4] + ", '\", \"" 
-                    + key[5] + "\": \"', " + sourceColumn[5] + ", '\", \"" 
-                    + "new_column" + "\": TIMESTAMP(\"', CURRENT_TIMESTAMP(), '\") }' AS JSON) AS data";
+String selectQuery = "SELECT " +
+                    "STRUCT(" +
+                    "  \"" + key[0] + "\" AS " + key[0] + ", " +
+                    "  \"" + key[1] + "\" AS " + key[1] + ", " +
+                    "  \"" + key[2] + "\" AS " + key[2] + ", " +
+                    "  \"" + key[3] + "\" AS " + key[3] + ", " +
+                    "  \"" + key[4] + "\" AS " + key[4] + ", " +
+                    "  \"" + key[5] + "\" AS " + key[5] + ", " +
+                    "  TIMESTAMP_SECONDS(" + sourceColumn[0] + ") AS " + key[0] + "_timestamp" +
+                    ") AS data, " +
+                    "TIMESTAMP_SECONDS(" + System.currentTimeMillis() / 1000 + ") AS insert_date";
