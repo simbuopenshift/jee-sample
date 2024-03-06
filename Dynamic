@@ -1,0 +1,15 @@
+import java.util.stream.IntStream;
+
+StringBuilder selectQueryBuilder = new StringBuilder("SELECT CONCAT('{ ");
+
+// Iterate over the indices of the arrays using IntStream.range
+IntStream.range(0, Math.min(key.length, sourceColumn.length))
+    .forEach(i -> selectQueryBuilder.append("\"").append(key[i]).append("\": \"', ").append(sourceColumn[i]).append(", '\", \""));
+
+// Remove the last "\", \"" from the string
+selectQueryBuilder.setLength(selectQueryBuilder.length() - 4);
+
+// Add the closing brace and alias
+selectQueryBuilder.append(" }') AS data");
+
+String selectQuery = selectQueryBuilder.toString();
