@@ -1,0 +1,8 @@
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+String selectQuery = "CONCAT(" +
+        IntStream.range(0, sourceColumns.length)
+                .mapToObj(i -> "'" + sourceColumns[i] + "'")
+                .collect(Collectors.joining(",'" + Pipeseperator + "'", "")) +
+        ") AS data";
