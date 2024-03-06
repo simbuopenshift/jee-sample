@@ -1,0 +1,15 @@
+StringBuilder selectQueryBuilder = new StringBuilder("CONCAT(");
+
+// Iterate over the source columns array
+for (int i = 0; i < sourceColumns.length; i++) {
+    selectQueryBuilder.append(sourceColumns[i]);
+    
+    // Add separators between columns, except for the last one
+    if (i < sourceColumns.length - 1) {
+        selectQueryBuilder.append(",'").append(Pipeseperator).append(Commaseperator).append(sourceColumns[i + 1]).append("',");
+    }
+}
+
+selectQueryBuilder.append(") AS data");
+
+String selectQuery = selectQueryBuilder.toString();
