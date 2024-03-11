@@ -1,6 +1,9 @@
 import com.google.cloud.bigquery.*;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 
 @Service
@@ -9,8 +12,8 @@ public class EmployeeService {
     public Flux<Employee> getEmployees() {
         BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
 
-        // Your BigQuery SQL query to select id, name, age from employees table
-        String query = "SELECT id, name, age FROM your_project.your_dataset.employees";
+        // Your BigQuery SQL query to select id, name, age, timestamp from employees table
+        String query = "SELECT id, name, age, FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S', timestamp) AS timestamp FROM your_project.your_dataset.employees";
 
         // Configure the query job
         QueryJobConfiguration queryConfig =
@@ -29,11 +32,23 @@ public class EmployeeService {
                 Employee employee = new Employee(
                     row.get("id").getLongValue(),
                     row.get("name").getStringValue(),
-                    (int) row.get("age").getLongValue()
+                    (int) row.get("age").getLongValue(),
+                    parseTimestamp(row.get("timestamp").getStringValue())
                 );
                 fluxSink.next(employee);
             }
             fluxSink.complete();
         });
+    }
+    
+    private Timestamp parseTimestamp(String timestampString) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date parsedDate = dateFormat.parse(timestampString);
+            return new Timestamp(parsedDate.getTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
