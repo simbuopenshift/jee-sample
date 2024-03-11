@@ -1,7 +1,10 @@
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.TableResult;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import java.util.stream.Collectors;
 
 @Service
 public class EmployeeService {
@@ -9,19 +12,25 @@ public class EmployeeService {
     public Flux<Employee> getEmployees() {
         BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
 
-        // Your BigQuery query to select id, name, age from employees table
+        // Your BigQuery SQL query to select id, name, age from employees table
         String query = "SELECT id, name, age FROM your_project.your_dataset.employees";
 
-        return Flux.fromIterable(
-            bigQuery.query(query)
-                    .iterateAll()
-                    .getValues()
-                    .stream()
-                    .map(row -> new Employee(
-                        Long.parseLong(row.get(0).getValue().toString()),
-                        row.get(1).getValue().toString(),
-                        Integer.parseInt(row.get(2).getValue().toString())))
-                    .collect(Collectors.toList())
-        );
+        // Configure the query job
+        QueryJobConfiguration queryConfig =
+            QueryJobConfiguration.newBuilder(query)
+                .setUseLegacySql(false)
+                .build();
+
+        // Execute the query job and get the result
+        TableResult result = bigQuery.query(queryConfig);
+
+        // Map the result to Flux<Employee>
+        return Flux.fromStream(result.iterateAll().stream()
+            .map(row -> new Employee(
+                Long.parseLong(row.get("id").getValue().toString()),
+                row.get("name").getValue().toString(),
+                Integer.parseInt(row.get("age").getValue().toString())))
+            .collect(Collectors.toList())
+            .stream());
     }
 }
