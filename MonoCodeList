@@ -1,0 +1,47 @@
+// BigQueryService.java
+import com.google.cloud.bigquery.FieldValue;
+import com.google.cloud.bigquery.TableResult;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+public class BigQueryService {
+
+    public Mono<List<Map<String, Object>>> executeQuery(String sqlQuery) {
+        BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+        QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(sqlQuery).build();
+        TableResult result = bigQuery.query(queryConfig);
+
+        return Mono.just(convertResultToJSON(result));
+    }
+
+    private List<Map<String, Object>> convertResultToJSON(TableResult result) {
+        List<String> columnNames = result.getSchema().getFields().stream()
+                .map(field -> field.getName())
+                .collect(Collectors.toList());
+
+        List<Map<String, Object>> rows = result.iterateAll().stream()
+                .map(row -> {
+                    Map<String, Object> jsonRow = new HashMap<>();
+                    for (int i = 0; i < row.size(); i++) {
+                        FieldValue value = row.get(i);
+                        String columnName = columnNames.get(i);
+                        if (value.isNull()) {
+                            jsonRow.put(columnName, null);
+                        } else {
+                            jsonRow.put(columnName, value.getValue());
+                        }
+                    }
+                    return jsonRow;
+                })
+                .collect(Collectors.toList());
+
+        return rows;
+    }
+}
