@@ -1,0 +1,36 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.bigquery.FieldValueList;
+import com.google.cloud.bigquery.TableResult;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+@Service
+public class BigQueryService {
+
+    private final ObjectMapper objectMapper;
+
+    public BigQueryService(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
+    public Mono<List<QueryResult>> executeSelectQuery(String selectQuery) {
+        BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+        QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(selectQuery).build();
+        TableResult result = bigQuery.query(queryConfig);
+
+        List<QueryResult> queryResults = StreamSupport.stream(result.iterateAll().spliterator(), false)
+                .map(this::mapRowToQueryResult)
+                .collect(Collectors.toList());
+
+        return Mono.just(queryResults);
+    }
+
+    private QueryResult mapRowToQueryResult(FieldValueList row) {
+        QueryResult queryResult = objectMapper.convertValue(row, QueryResult.class);
+        return queryResult;
+    }
+}
