@@ -1,0 +1,22 @@
+// BigQueryController.java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+
+@RestController
+public class BigQueryController {
+
+    private final BigQueryService bigQueryService;
+
+    @Autowired
+    public BigQueryController(BigQueryService bigQueryService) {
+        this.bigQueryService = bigQueryService;
+    }
+
+    @GetMapping("/query")
+    public Flux<Object> executeQuery(@RequestParam("sql") String sqlQuery) {
+        return bigQueryService.executeQuery(sqlQuery);
+    }
+}
