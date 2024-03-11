@@ -1,0 +1,13 @@
+private Timestamp parseTimestamp(String timestampString) {
+    try {
+        // Convert epoch time to milliseconds
+        double epochSeconds = Double.parseDouble(timestampString);
+        long epochMillis = (long) (epochSeconds * 1000);
+        
+        // Create a Timestamp object from milliseconds
+        return new Timestamp(epochMillis);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return null;
+    }
+}
