@@ -1,10 +1,7 @@
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.BigQueryOptions;
-import com.google.cloud.bigquery.QueryJobConfiguration;
-import com.google.cloud.bigquery.TableResult;
+import com.google.cloud.bigquery.*;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import java.util.stream.Collectors;
+import java.util.Iterator;
 
 @Service
 public class EmployeeService {
@@ -25,12 +22,18 @@ public class EmployeeService {
         TableResult result = bigQuery.query(queryConfig);
 
         // Map the result to Flux<Employee>
-        return Flux.fromStream(result.iterateAll().stream()
-            .map(row -> new Employee(
-                Long.parseLong(row.get("id").getValue().toString()),
-                row.get("name").getValue().toString(),
-                Integer.parseInt(row.get("age").getValue().toString())))
-            .collect(Collectors.toList())
-            .stream());
+        return Flux.create(fluxSink -> {
+            Iterator<FieldValueList> iterator = result.iterateAll().iterator();
+            while (iterator.hasNext()) {
+                FieldValueList row = iterator.next();
+                Employee employee = new Employee(
+                    row.get("id").getLongValue(),
+                    row.get("name").getStringValue(),
+                    (int) row.get("age").getLongValue()
+                );
+                fluxSink.next(employee);
+            }
+            fluxSink.complete();
+        });
     }
 }
