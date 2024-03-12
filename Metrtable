@@ -1,0 +1,13 @@
+Here's the metrics information presented in a tabular format:
+
+| Metric Name           | Severity | Metric Type       | Alert Name              | Priority if Response | Business Impact                          | Threshold                |
+|-----------------------|----------|-------------------|-------------------------|----------------------|------------------------------------------|--------------------------|
+| CPU Utilization       | High     | Performance       | High CPU Utilization    | High                 | Degraded performance, potential downtime | > 80%                    |
+| Memory Utilization    | High     | Performance       | High Memory Utilization | High                 | Increased risk of service instability    | > 80%                    |
+| Response Latency      | Medium   | Performance       | High Response Latency   | Medium               | Reduced user experience, slow processing | > 500ms                  |
+| Request Count         | Low      | Traffic           | Low Request Count       | Low                  | Decreased workload, potential issues     | < 10 requests per minute |
+| Error Rate            | High     | Error             | High Error Rate         | High                 | Data integrity issues, potential failure  | > 5% error rate          |
+| Disk Utilization      | Medium   | Performance       | High Disk Utilization   | Medium               | Potential I/O bottlenecks                 | > 80%                    |
+| Throughput            | Medium   | Performance       | Low Throughput          | Medium               | Reduced data processing efficiency        | < 100 requests per minute |
+
+These metrics provide insights into different aspects of the Cloud Run job's performance and health, helping to identify and address issues promptly.
