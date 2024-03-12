@@ -1,0 +1,33 @@
+For monitoring a Cloud Run job in GCP that reads data from a BigQuery table, loads it into another BigQuery table, and then exports the target table to CSV and saves it in a GCS location, you can define metrics and alerts to ensure the job's health and performance. Here are some key metrics and alerts you can configure:
+
+### Metrics:
+1. **CPU Utilization**: Monitor CPU usage to ensure the job has enough resources allocated.
+2. **Memory Utilization**: Track memory usage to ensure the job doesn't run out of memory.
+3. **Response Latency**: Measure the time taken for each request to complete.
+4. **Request Count**: Monitor the number of requests processed by the Cloud Run service.
+5. **Error Rate**: Track the rate of errors encountered during job execution.
+6. **Disk Utilization**: If the job involves any disk I/O operations, monitor disk utilization.
+7. **Throughput**: Measure the rate at which data is processed and transferred between services.
+
+### Alerts:
+1. **High Error Rate**: Trigger an alert when the error rate exceeds a certain threshold, indicating potential issues with data processing or service availability.
+2. **High CPU/Memory Utilization**: Set alerts for high CPU or memory utilization, which could indicate the need for additional resources or optimization.
+3. **Long Response Times**: Alert on unusually long response times, which may indicate performance bottlenecks or resource constraints.
+4. **Disk Space Exhaustion**: Set an alert for low disk space in the GCS location where CSV files are saved to prevent data loss.
+5. **Service Unavailability**: Trigger an alert if the Cloud Run service becomes unavailable or experiences prolonged downtime.
+
+### MQL Configuration:
+Here's an example MQL (Monitoring Query Language) configuration for setting up an alert on high CPU utilization:
+
+```
+fetch cloud_run_instance
+| filter (service == "your-service-name")
+| group_by [project_id, service]
+| every 1m
+| condition cpu_utilization > 80
+| count() > 1
+```
+
+This MQL query fetches Cloud Run instances, filters by service name, groups the data by project ID and service name, checks CPU utilization every minute, and triggers an alert if the CPU utilization exceeds 80% for more than one instance.
+
+You can customize and expand upon these metrics and alerts based on your specific requirements and the critical aspects of your Cloud Run job.
