@@ -1,0 +1,7 @@
+Apologies for the oversight. To include the Cloud Run job name in the log-based metric configuration, you'll need to adjust the log name pattern accordingly. Here's the revised configuration:
+
+- **Resource Type:** Cloud Run
+- **Log Name:** projects/[PROJECT_ID]/logs/cloudaudit.googleapis.com%2Factivity
+- **Message:** `"methodName: google.cloud.run.v1.Namespaces.getIamPolicy" AND resource.name="[CLOUD_RUN_JOB_NAME]"`
+
+Replace [PROJECT_ID] with your actual GCP project ID, and [CLOUD_RUN_JOB_NAME] with the name of your Cloud Run job. This will ensure that the log-based metric specifically targets activities related to the specified Cloud Run job.
