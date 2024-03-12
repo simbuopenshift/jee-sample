@@ -1,0 +1,147 @@
+Sure, here are example MQL scripts for both metric-based and log-based alerts:
+
+### Metric-Based Alerts MQL Script:
+
+#### CPU Utilization:
+```
+fetch cloud_run_instance
+| filter (service == "your-service-name")
+| group_by [project_id, service]
+| every 1m
+| condition cpu_utilization > 80
+| count() > 1
+```
+
+#### Memory Utilization:
+```
+fetch cloud_run_instance
+| filter (service == "your-service-name")
+| group_by [project_id, service]
+| every 1m
+| condition memory_utilization > 80
+| count() > 1
+```
+
+#### Response Latency:
+```
+fetch cloud_run_instance
+| filter (service == "your-service-name")
+| group_by [project_id, service]
+| every 1m
+| condition response_latency > 500ms
+| count() > 1
+```
+
+#### Request Count:
+```
+fetch cloud_run_instance
+| filter (service == "your-service-name")
+| group_by [project_id, service]
+| every 1m
+| condition request_count < 10
+| count() > 1
+```
+
+#### Error Rate:
+```
+fetch cloud_run_instance
+| filter (service == "your-service-name")
+| group_by [project_id, service]
+| every 1m
+| condition error_rate > 5%
+| count() > 1
+```
+
+#### Disk Utilization:
+```
+fetch cloud_run_instance
+| filter (service == "your-service-name")
+| group_by [project_id, service]
+| every 1m
+| condition disk_utilization > 80
+| count() > 1
+```
+
+#### Throughput:
+```
+fetch cloud_run_instance
+| filter (service == "your-service-name")
+| group_by [project_id, service]
+| every 1m
+| condition throughput < 100
+| count() > 1
+```
+
+### Log-Based Alerts MQL Script:
+
+#### High Error Rate:
+```
+fetch gcp.logging
+| filter logName="projects/YOUR_PROJECT_ID/logs/cloudfunctions.googleapis.com%2Fcloud-functions"
+| filter severity="ERROR"
+| group_by [project_id, logName]
+| every 1m
+| condition count() > 10
+```
+
+#### Service Unavailability:
+```
+fetch gcp.logging
+| filter logName="projects/YOUR_PROJECT_ID/logs/cloudfunctions.googleapis.com%2Fcloud-functions"
+| filter logEntry="Service Unavailable"
+| group_by [project_id, logName]
+| every 1m
+| condition count() > 5
+```
+
+#### Long Response Times:
+```
+fetch gcp.logging
+| filter logName="projects/YOUR_PROJECT_ID/logs/cloudfunctions.googleapis.com%2Fcloud-functions"
+| filter logEntry="Response time exceeded threshold"
+| group_by [project_id, logName]
+| every 1m
+| condition count() > 2
+```
+
+#### Disk Space Exhaustion:
+```
+fetch gcp.logging
+| filter logName="projects/YOUR_PROJECT_ID/logs/cloudfunctions.googleapis.com%2Fcloud-functions"
+| filter logEntry="Low disk space"
+| group_by [project_id, logName]
+| every 1m
+| condition count() > 1
+```
+
+#### Gradle Build Failure:
+```
+fetch gcp.logging
+| filter logName="projects/YOUR_PROJECT_ID/logs/cloudfunctions.googleapis.com%2Fcloud-functions"
+| filter logEntry="Gradle build failed"
+| group_by [project_id, logName]
+| every 1m
+| condition count() > 1
+```
+
+#### BigQuery Export Failure:
+```
+fetch gcp.logging
+| filter logName="projects/YOUR_PROJECT_ID/logs/cloudfunctions.googleapis.com%2Fcloud-functions"
+| filter logEntry="BigQuery export failed"
+| group_by [project_id, logName]
+| every 1m
+| condition count() > 1
+```
+
+#### GCS Save Failure:
+```
+fetch gcp.logging
+| filter logName="projects/YOUR_PROJECT_ID/logs/cloudfunctions.googleapis.com%2Fcloud-functions"
+| filter logEntry="GCS save operation failed"
+| group_by [project_id, logName]
+| every 1m
+| condition count() > 1
+```
+
+Adjust the queries as per your specific project setup and logging configuration.
