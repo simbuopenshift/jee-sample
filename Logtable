@@ -1,0 +1,13 @@
+Here's the log-based alerts information presented in a tabular format:
+
+| Alert Name                   | Severity | Log Message                      | Frequency of Logs | Alert Ops Integration        |
+|------------------------------|----------|----------------------------------|-------------------|-------------------------------|
+| High Error Rate              | High     | "ERROR"                          | High              | Slack, Email                  |
+| Service Unavailability       | High     | "Service Unavailable"            | High              | PagerDuty, SMS                |
+| Long Response Times          | Medium   | "Response time exceeded threshold" | Medium          | OpsGenie, Webhook             |
+| Disk Space Exhaustion        | Medium   | "Low disk space"                 | Medium            | Email, Ticketing System       |
+| Gradle Build Failure         | High     | "Gradle build failed"            | Low               | Slack, JIRA                   |
+| BigQuery Export Failure      | High     | "BigQuery export failed"         | Low               | Email, PagerDuty              |
+| GCS Save Failure             | High     | "GCS save operation failed"      | Low               | Webhook, Slack                |
+
+These log-based alerts are triggered based on specific log messages, helping to identify and respond to critical issues in the Cloud Run job's execution and environment. They cover various scenarios such as errors, service unavailability, performance degradation, and failures in external services like BigQuery and GCS.
