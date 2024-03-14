@@ -1,0 +1,54 @@
+import static org.mockito.Mockito.*;
+
+import com.google.cloud.bigquery.*;
+import org.junit.jupiter.api.Test;
+import reactor.test.StepVerifier;
+
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
+public class EmployeeServiceTest {
+
+    @Test
+    public void testGetEmployees() {
+        // Mock BigQuery
+        BigQuery bigQuery = mock(BigQuery.class);
+        TableResult tableResult = mock(TableResult.class);
+
+        // Mock FieldValueList
+        FieldValueList row1 = mock(FieldValueList.class);
+        when(row1.get("id")).thenReturn(FieldValue.of(1L));
+        when(row1.get("name")).thenReturn(FieldValue.of("John"));
+        when(row1.get("age")).thenReturn(FieldValue.of(30L));
+        when(row1.get("timestamp")).thenReturn(FieldValue.of("2024-03-13 10:00:00"));
+
+        FieldValueList row2 = mock(FieldValueList.class);
+        when(row2.get("id")).thenReturn(FieldValue.of(2L));
+        when(row2.get("name")).thenReturn(FieldValue.of("Alice"));
+        when(row2.get("age")).thenReturn(FieldValue.of(25L));
+        when(row2.get("timestamp")).thenReturn(FieldValue.of("2024-03-13 11:00:00"));
+
+        List<FieldValueList> fieldValueLists = new ArrayList<>();
+        fieldValueLists.add(row1);
+        fieldValueLists.add(row2);
+
+        // Mock result iterator
+        Iterator<FieldValueList> iterator = fieldValueLists.iterator();
+        when(tableResult.iterateAll()).thenReturn(iterator);
+
+        // Mock BigQuery query and result
+        when(bigQuery.query(any(QueryJobConfiguration.class))).thenReturn(tableResult);
+
+        // Create EmployeeService instance with mock BigQuery
+        EmployeeService employeeService = new EmployeeService();
+        employeeService.setBigQuery(bigQuery);
+
+        // Test Flux
+        StepVerifier.create(employeeService.getEmployees())
+                .expectNextMatches(employee -> employee.getId() == 1L && employee.getName().equals("John"))
+                .expectNextMatches(employee -> employee.getId() == 2L && employee.getName().equals("Alice"))
+                .expectComplete()
+                .verify();
+    }
+}
