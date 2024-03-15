@@ -1,0 +1,113 @@
+Here's a basic Spring Boot project setup using Gradle to achieve what you described:
+
+1. **Create a new Spring Boot project**: You can create a new Spring Boot project using Spring Initializr (https://start.spring.io/) or any IDE that supports Spring Boot project creation.
+
+2. **Build.gradle**: Add the necessary dependencies for Spring Boot and JDBC (assuming you're using MySQL as the database):
+
+```gradle
+plugins {
+    id 'org.springframework.boot' version '2.5.6'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'mysql:mysql-connector-java'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+test {
+    useJUnitPlatform()
+}
+```
+
+3. **Employee.java**: Create a POJO class to map to the Employee table:
+
+```java
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
+@Entity
+public class Employee {
+    @Id
+    private Long id;
+    private String name;
+    private int age;
+
+    // getters and setters
+}
+```
+
+4. **EmployeeRepository.java**: Create a repository interface to interact with the Employee table:
+
+```java
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+}
+```
+
+5. **EmployeeService.java**: Create a service class to handle business logic:
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class EmployeeService {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    public List<Employee> getEmployeeById(Long id) {
+        return employeeRepository.findById(id).map(List::of).orElse(List.of());
+    }
+}
+```
+
+6. **EmployeeController.java**: Create a REST controller to handle incoming requests:
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+
+@RestController
+public class EmployeeController {
+
+    @Autowired
+    private EmployeeService employeeService;
+
+    @GetMapping("/employee")
+    public List<Employee> getEmployeeById(@RequestParam Long id) {
+        return employeeService.getEmployeeById(id);
+    }
+}
+```
+
+7. **application.properties**: Configure your database connection details in the application.properties file:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/your_database_name
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.jpa.hibernate.ddl-auto=update
+```
+
+Replace `your_database_name`, `your_username`, and `your_password` with your actual database details.
+
+Now you have a basic Spring Boot application set up to retrieve employee details by ID from the database and return them as JSON. Make sure to have your database schema set up with an `Employee` table having `id`, `name`, and `age` columns.
