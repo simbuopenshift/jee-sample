@@ -1,0 +1,40 @@
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.TableResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController
+public class EmployeeController {
+
+    @GetMapping("/employee")
+    public List<Employee> getEmployee(@RequestParam String id) {
+        List<Employee> employees = new ArrayList<>();
+        
+        // Create BigQuery instance
+        BigQuery bigquery = BigQueryOptions.getDefaultInstance().getService();
+
+        // Construct query
+        String query = "SELECT id, age, name FROM `your-project-id.your-dataset.employee_table` WHERE id = '" + id + "'";
+
+        // Execute query
+        QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query).build();
+        TableResult result = bigquery.query(queryConfig);
+
+        // Map result to Employee objects
+        result.iterateAll().forEach(row -> {
+            Employee employee = new Employee();
+            employee.setId(row.get("id").getStringValue());
+            employee.setAge((int) row.get("age").getLongValue());
+            employee.setName(row.get("name").getStringValue());
+            employees.add(employee);
+        });
+
+        return employees;
+    }
+}
