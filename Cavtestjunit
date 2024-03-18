@@ -1,0 +1,51 @@
+import com.google.cloud.bigquery.FieldValue;
+import com.google.cloud.bigquery.TableResult;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class CsvWriterTest {
+
+    @Test
+    public void testWriteCsv() {
+        // Mock TableResult
+        TableResult results = Mockito.mock(TableResult.class);
+        
+        // Create sample data
+        List<FieldValue> row1 = new ArrayList<>();
+        row1.add(FieldValue.of("value1"));
+        row1.add(FieldValue.of("value2"));
+
+        List<FieldValue> row2 = new ArrayList<>();
+        row2.add(FieldValue.of("value3"));
+        row2.add(FieldValue.of("value4"));
+
+        List<FieldValue> rows = new ArrayList<>();
+        rows.add(new FieldValueListMock(row1));
+        rows.add(new FieldValueListMock(row2));
+
+        // Stub the behavior of iterateAll() method to return sample rows
+        Mockito.when(results.iterateAll()).thenReturn(rows.iterator());
+
+        // Call the method
+        String headers = "header1, header2";
+        StringBuilder csvContent = CsvWriter.writeCsv(results, headers);
+
+        // Verify the output
+        String expectedCsvContent = "header1, header2\n" +
+                                    "value1, value2\n" +
+                                    "value3, value4";
+        assertEquals(expectedCsvContent, csvContent.toString());
+    }
+    
+    // Helper class to mock FieldValueList
+    private static class FieldValueListMock extends ArrayList<FieldValue> implements FieldValueList {
+        FieldValueListMock(List<FieldValue> values) {
+            super(values);
+        }
+    }
+}
