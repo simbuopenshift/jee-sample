@@ -1,0 +1,41 @@
+import com.google.cloud.bigquery.*;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class EmpServiceTest {
+
+    @Test
+    public void testGetEmployee() {
+        // Mock BigQuery
+        BigQuery bigQuery = Mockito.mock(BigQuery.class);
+        EmpService empService = new EmpService();
+
+        // Mock TableResult
+        TableResult tableResult = Mockito.mock(TableResult.class);
+        
+        // Mock FieldValueList
+        FieldValueList row = Mockito.mock(FieldValueList.class);
+        Mockito.when(row.get("id")).thenReturn(FieldValue.of("123"));
+        Mockito.when(row.get("age")).thenReturn(FieldValue.of(30L));
+        Mockito.when(row.get("name")).thenReturn(FieldValue.of("John"));
+
+        // Mock result iterator
+        Iterable<FieldValueList> iterable = () -> List.of(row).iterator();
+        Mockito.when(tableResult.iterateAll()).thenReturn(iterable);
+
+        // Mock BigQuery query and result
+        Mockito.when(bigQuery.query(Mockito.any(QueryJobConfiguration.class))).thenReturn(tableResult);
+
+        // Call the method
+        List<Employee> employees = empService.getEmployee("123");
+
+        // Verify the result
+        assertEquals(1, employees.size());
+        Employee employee = employees.get(0);
+        assertEquals("123", employee.getId());
+        assertEquals(30, employee.getAge());
+        assertEquals("John", employee.getName());
+    }
+}
