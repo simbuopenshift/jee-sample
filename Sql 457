@@ -1,3 +1,5 @@
+implementation 'com.google.cloud.sql:postgres-socket-factory:1.2.2'
+implementation 'org.postgresql:postgresql:42.2.23'
 Sure, here's the full end-to-end Spring Boot application code using MapStruct for object mapping and Gradle as the build tool:
 
 **build.gradle:**
