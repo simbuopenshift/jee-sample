@@ -1,0 +1,100 @@
+To integrate Cloud SQL PostgreSQL with R2DBC in a Spring Boot application, while using a `List` instead of `Mono`, you can follow these steps:
+
+**1. Update `R2dbcDatabaseConfig` to include Cloud SQL configuration:**
+
+```java
+import io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider;
+import io.r2dbc.postgresql.api.PostgresqlConnectionFactory;
+import io.r2dbc.spi.ConnectionFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
+import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.PreparedOperation;
+import org.springframework.r2dbc.core.binding.Bindings;
+import org.springframework.r2dbc.core.binding.Parameter;
+import org.springframework.r2dbc.core.binding.Values;
+import org.springframework.r2dbc.core.binding.ValuesImpl;
+import org.springframework.r2dbc.core.prepared.PreparedOperationBuilder;
+import org.springframework.r2dbc.core.prepared.PreparedOperationBuilder.SqlProvider;
+import org.springframework.r2dbc.core.prepared.StatementMapper;
+import org.springframework.r2dbc.core.prepared.StatementMapperBuilder;
+import org.springframework.r2dbc.core.prepared.StatementMapperFactory;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.function.Supplier;
+
+@Configuration
+public class R2dbcDatabaseConfig extends AbstractR2dbcConfiguration {
+
+    @Override
+    @Bean
+    public ConnectionFactory connectionFactory() {
+        return new PostgresqlConnectionFactoryProvider()
+            .create(PostgresqlConnectionFactoryOptions.builder()
+                .host("your-host")
+                .port(5432) // default port
+                .database("your-database")
+                .username("your-username")
+                .password("your-password")
+                .build());
+    }
+}
+```
+
+Replace `"your-host"`, `"your-database"`, `"your-username"`, and `"your-password"` with your actual Cloud SQL PostgreSQL details.
+
+**2. Update `EmployeeService` to return a `List<EmployeeDTO>`:**
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class EmployeeService {
+    
+    @Autowired
+    private EmployeeRepository employeeRepository;
+    
+    @Autowired
+    private EmployeeMapper employeeMapper;
+    
+    public Mono<List<EmployeeDTO>> getEmployeeById(String id) {
+        return employeeRepository.findById(id)
+                .map(employeeMapper::toDto)
+                .collectList();
+    }
+}
+```
+
+**3. Update `EmployeeController` to handle a list response:**
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+
+@RestController
+public class EmployeeController {
+    
+    @Autowired
+    private EmployeeService employeeService;
+    
+    @GetMapping("/employee")
+    public Mono<List<EmployeeDTO>> getEmployee(@RequestParam String id) {
+        return employeeService.getEmployeeById(id);
+    }
+}
+```
+
+By following these steps, you'll configure your Spring Boot application to use Cloud SQL PostgreSQL with R2DBC and return a `List<EmployeeDTO>` in response to the API call. Adjust the Cloud SQL connection details in `R2dbcDatabaseConfig` according to your setup.
