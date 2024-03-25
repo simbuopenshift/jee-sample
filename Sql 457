@@ -178,3 +178,53 @@ public class DatabaseConfig extends AbstractR2dbcConfiguration {
     }
 }
 
+
+mockito
+package com.example.controller;
+
+import com.example.dto.EmployeeDto;
+import com.example.service.EmployeeService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+class EmployeeControllerTest {
+
+    @Mock
+    private EmployeeService employeeService;
+
+    @InjectMocks
+    private EmployeeController employeeController;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @Test
+    void getEmployeeById() {
+        // Mocking behavior
+        EmployeeDto expectedEmployee = new EmployeeDto();
+        expectedEmployee.setName("John Doe");
+        expectedEmployee.setAge(30);
+        expectedEmployee.setDept("IT");
+
+        when(employeeService.getEmployeeById(1L)).thenReturn(expectedEmployee);
+
+        // Test the controller method
+        EmployeeDto actualEmployee = employeeController.getEmployeeById(1L);
+
+        // Assertion
+        assertEquals(expectedEmployee.getName(), actualEmployee.getName());
+        assertEquals(expectedEmployee.getAge(), actualEmployee.getAge());
+        assertEquals(expectedEmployee.getDept(), actualEmployee.getDept());
+    }
+}
+
+
+
