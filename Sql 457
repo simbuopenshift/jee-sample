@@ -144,3 +144,37 @@ public class EmployeeController {
 Make sure to configure the connection properties in `application.properties`. Replace the placeholders in the code with actual values according to your setup.
 
 This setup uses R2DBC for reactive database access, MapStruct for object mapping, and Spring Boot for the application framework. Adjust the code and configurations as needed for your specific requirements and environment.
+import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.pool.ConnectionPoolConfiguration;
+import io.r2dbc.pool.PoolingConnectionFactoryProvider;
+import io.r2dbc.spi.ConnectionFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
+
+@Configuration
+public class DatabaseConfig extends AbstractR2dbcConfiguration {
+
+    @Value("${spring.r2dbc.url}")
+    private String dataSourceUrl;
+
+    @Value("${spring.r2dbc.username}")
+    private String dataSourceUsername;
+
+    @Value("${spring.r2dbc.password}")
+    private String dataSourcePassword;
+
+    @Override
+    @Bean
+    public ConnectionFactory connectionFactory() {
+        ConnectionFactory connectionFactory = super.connectionFactory();
+        ConnectionPoolConfiguration configuration = ConnectionPoolConfiguration.builder(connectionFactory)
+                .maxIdleTime(Duration.ofSeconds(30))
+                .maxSize(10)
+                .initialSize(5)
+                .build();
+        return new ConnectionPool(new PoolingConnectionFactoryProvider(), configuration);
+    }
+}
+
