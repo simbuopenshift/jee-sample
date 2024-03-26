@@ -1,0 +1,17 @@
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+public class Main {
+    public static void main(String[] args) {
+        String[] sourceColumnValue = {"column1", "column2", "column3"}; // Example values
+        String[] sourceColumnName = {"name1", "name2", "name3"}; // Example names
+        int n = sourceColumnValue.length; // Number of columns
+
+        String concatColumns = IntStream.range(0, n)
+                .mapToObj(i -> "CONCAT(IFNULL(CAST(" + sourceColumnValue[i] + " AS STRING), '') AS " + sourceColumnName[i])
+                .collect(Collectors.joining(", "));
+
+        String query = "SELECT " + concatColumns + " FROM table";
+        System.out.println(query);
+    }
+}
