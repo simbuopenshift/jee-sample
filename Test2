@@ -1,5 +1,7 @@
-String selectColumn = Arrays.stream(primarykey)
+String[] primaryKey = {"1", "2", "3"};
+String selectColumn = Arrays.stream(primaryKey)
         .map(column -> "IFNULL(CAST(" + column + " AS STRING), '')")
         .reduce((s1, s2) -> s1 + " | " + s2)
+        .map(s -> s.replaceFirst(" \\| (?!.* \\| )", ""))
         .orElse("");
 return "CONCAT(" + selectColumn + ") AS data";
