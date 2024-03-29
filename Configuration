@@ -28,3 +28,31 @@ public class AppConfig {
         return UserDataProperties.create("client-load", properties);
     }
 }
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+
+@Configuration
+public record UserDataProperties(String name, String dept) {
+    private final Environment environment;
+
+    @Autowired
+    public UserDataProperties(Environment environment) {
+        this.environment = environment;
+    }
+
+    public static UserDataProperties create(String prefix, UserDataProperties properties) {
+        return new UserDataProperties(
+                properties.name(),
+                properties.dept(),
+                prefix
+        );
+    }
+
+    public String prefix() {
+        return environment.getProperty("user.prefix");
+    }
+}
+
