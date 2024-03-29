@@ -1,4 +1,5 @@
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
@@ -12,10 +13,9 @@ public class AppConfig {
     private Environment environment;
 
     @Bean
-    @ConfigurationProperties(prefix = "default-prefix")
     public YourRecordProperties yourRecordProperties() {
-        YourRecordProperties properties = new YourRecordProperties();
-        properties.setPrefix(environment.getProperty("app.selected-prefix"));
+        String prefix = environment.getProperty("app.selected-prefix");
+        YourRecordProperties properties = new Binder(environment).bind(prefix, YourRecordProperties.class).get();
         return properties;
     }
 
