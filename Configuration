@@ -12,16 +12,15 @@ public class AppConfig {
     private Environment environment;
 
     @Bean
-    @ConfigurationProperties(prefix = "dummy") // Provide any initial prefix
+    @ConfigurationProperties(prefix = "default-prefix")
     public YourRecordProperties yourRecordProperties() {
-        return new YourRecordProperties();
+        YourRecordProperties properties = new YourRecordProperties();
+        properties.setPrefix(environment.getProperty("app.selected-prefix"));
+        return properties;
     }
 
     @Bean
     public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-        PropertySourcesPlaceholderConfigurer propertyConfigurer = new PropertySourcesPlaceholderConfigurer();
-        propertyConfigurer.setProperties(environment);
-        return propertyConfigurer;
+        return new PropertySourcesPlaceholderConfigurer();
     }
-
 }
