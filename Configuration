@@ -33,3 +33,21 @@ public class LoadConfig {
         }
     }
 }
+
+@Service
+public class MyService {
+
+    private final LoadConfig loadConfig;
+
+    public MyService(LoadConfig loadConfig) {
+        this.loadConfig = loadConfig;
+    }
+
+    public void doSomethingBasedOnCondition(boolean condition) {
+        loadConfig.selectPrefixBasedOnCondition(condition);
+        // Access properties using loadConfig.getPrefix()
+        // ...
+    }
+}
+
+
