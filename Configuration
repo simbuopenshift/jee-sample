@@ -1,9 +1,9 @@
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.Environment;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Configuration
 public class AppConfig {
@@ -12,37 +12,16 @@ public class AppConfig {
     private Environment environment;
 
     @Bean
+    @ConfigurationProperties(prefix = "dummy") // Provide any initial prefix
     public YourRecordProperties yourRecordProperties() {
-        String selectedPrefix = environment.getProperty("app.selected-prefix");
-        return createProperties(selectedPrefix);
-    }
-
-    private YourRecordProperties createProperties(String prefix) {
-        return switch (prefix) {
-            case "client-data" -> createClientDataProperties();
-            case "consumer-data" -> createConsumerDataProperties();
-            default -> throw new IllegalArgumentException("Invalid prefix: " + prefix);
-        };
-    }
-
-    private YourRecordProperties createClientDataProperties() {
-        return new YourRecordProperties(
-            environment.getProperty("client-data.property1"),
-            environment.getProperty("client-data.property2"),
-            // add the rest of the properties here
-        );
-    }
-
-    private YourRecordProperties createConsumerDataProperties() {
-        return new YourRecordProperties(
-            environment.getProperty("consumer-data.property1"),
-            environment.getProperty("consumer-data.property2"),
-            // add the rest of the properties here
-        );
+        return new YourRecordProperties();
     }
 
     @Bean
     public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-        return new PropertySourcesPlaceholderConfigurer();
+        PropertySourcesPlaceholderConfigurer propertyConfigurer = new PropertySourcesPlaceholderConfigurer();
+        propertyConfigurer.setProperties(environment);
+        return propertyConfigurer;
     }
+
 }
