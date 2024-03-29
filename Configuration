@@ -1,0 +1,30 @@
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.core.env.Environment;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@Configuration
+public class AppConfig {
+
+    @Autowired
+    private Environment environment;
+
+    @Bean
+    @ConfigurationProperties(prefix = "${app.selected-prefix}")
+    public ClientDataProperties clientDataProperties() {
+        return new ClientDataProperties();
+    }
+
+    @Bean
+    @ConfigurationProperties(prefix = "${app.selected-prefix}")
+    public ConsumerDataProperties consumerDataProperties() {
+        return new ConsumerDataProperties();
+    }
+
+    @Bean
+    public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+        return new PropertySourcesPlaceholderConfigurer();
+    }
+}
