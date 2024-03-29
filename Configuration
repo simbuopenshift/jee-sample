@@ -1,26 +1,30 @@
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.bind.Binder;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.core.env.Environment;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 @Configuration
-public class AppConfig {
+@ConfigurationProperties(prefix = "")
+public class YourConfigurationProperties {
 
     @Autowired
     private Environment environment;
 
-    @Bean
-    public YourRecordProperties yourRecordProperties() {
-        String prefix = environment.getProperty("app.selected-prefix");
-        YourRecordProperties properties = new Binder(environment).bind(prefix, YourRecordProperties.class).get();
-        return properties;
+    private String prefix;
+
+    public YourConfigurationProperties() {
+        // Retrieve the prefix value from the environment variable
+        this.prefix = environment.getProperty("your.prefix.property");
     }
 
-    @Bean
-    public PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-        return new PropertySourcesPlaceholderConfigurer();
+    // Getters and setters for other configuration properties
+
+    public String getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
     }
 }
