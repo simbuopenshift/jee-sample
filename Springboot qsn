@@ -1,0 +1,31 @@
+Sure, here are some common Spring Boot interview questions along with sample answers for experienced candidates:
+
+1. **What is Spring Boot, and how does it differ from the Spring Framework?**
+   
+   Answer: Spring Boot is an extension of the Spring Framework that simplifies the process of building stand-alone, production-grade Spring-based applications. It provides out-of-the-box solutions for common configuration, allowing developers to focus more on business logic rather than boilerplate setup. Unlike the Spring Framework, which requires manual configuration, Spring Boot provides auto-configuration, embedding the necessary dependencies to create executable JARs or WARs.
+
+2. **Explain the concept of auto-configuration in Spring Boot.**
+
+   Answer: Auto-configuration in Spring Boot is a feature that automatically configures the Spring application context based on the dependencies present in the classpath. It analyzes the classpath, detects libraries, and configures beans accordingly, reducing the need for manual configuration. Auto-configuration is achieved through the use of `@EnableAutoConfiguration` annotation and various conditions defined in the Spring Boot starter modules.
+
+3. **What are Spring Boot starters?**
+
+   Answer: Spring Boot starters are pre-configured dependencies that simplify the setup of various Spring-related technologies and frameworks. They encapsulate common sets of dependencies, such as JDBC, JPA, Security, Web, etc., into easily consumable modules. By including a starter in the project's build configuration, developers can quickly get started with the corresponding technology without worrying about version compatibility or dependency management.
+
+4. **How does Spring Boot support externalized configuration?**
+
+   Answer: Spring Boot allows externalized configuration through property files, YAML files, environment variables, and command-line arguments. It follows a hierarchical approach for property resolution, allowing properties to be overridden at different levels (e.g., application.properties, application.yml, environment variables). Spring Boot also provides support for profiles, enabling the configuration of different environments (e.g., development, production) with a single codebase.
+
+5. **What is Spring Boot Actuator, and what functionalities does it provide?**
+
+   Answer: Spring Boot Actuator is a set of production-ready features provided by Spring Boot for monitoring and managing the application. It includes endpoints for health checks, metrics, environment information, configuration properties, etc. Actuator also supports custom endpoints for exposing application-specific monitoring data. Additionally, it integrates with various monitoring systems, such as Prometheus, Grafana, and Micrometer, for enhanced observability.
+
+6. **Explain the difference between @Component, @Controller, @Service, and @Repository annotations in Spring Boot.**
+
+   Answer: 
+   - `@Component`: Marks a Java class as a Spring component, allowing it to be automatically detected and registered in the Spring application context.
+   - `@Controller`: Used to annotate classes that handle HTTP requests in a Spring MVC application, typically used in web applications.
+   - `@Service`: Indicates that a class contains business logic or service layer operations. It's typically used to denote service classes in the application.
+   - `@Repository`: Annotates classes that interact with a database or external data source. It serves as a marker for the persistence layer, enabling exception translation and other Spring Data features.
+
+Feel free to elaborate on any of these answers or ask for more specific details!
