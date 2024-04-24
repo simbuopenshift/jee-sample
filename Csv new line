@@ -1,0 +1,19 @@
+StringBuilder csvContent = new StringBuilder();
+csvContent.append(headers);
+
+results.iterateAll().forEach(row -> {
+    String rowValues = row.stream()
+                         .map(fieldValue -> escapeNewline(fieldValue.getValue().toString()))
+                         .collect(Collectors.joining(", "));
+    csvContent.append(rowValues).append("\n");
+});
+
+// Remove trailing newline character if it's the last line
+if (csvContent.length() > 0 && csvContent.charAt(csvContent.length() - 1) == '\n') {
+    csvContent.setLength(csvContent.length() - 1); // Remove the trailing newline character
+}
+
+// Method to escape newline characters
+private String escapeNewline(String value) {
+    return value.replace("\n", "\\n");
+}
