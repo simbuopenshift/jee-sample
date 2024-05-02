@@ -1,20 +1,26 @@
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
+@RestController
+@RequestMapping("/api")
+public class ExampleController {
 
-@RestControllerAdvice
-public class GlobalExceptionHandler {
-
-    @ExceptionHandler(MissingRequestHeaderException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleMissingRequestHeaderException(MissingRequestHeaderException ex) {
-        String headerName = ex.getHeaderName();
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "Missing request header: " + headerName);
-        return error;
+    @GetMapping("/example/{id}")
+    public ResponseEntity<String> getById(
+            @PathVariable String id,
+            @RequestHeader(name = "Header1", required = false) String header1,
+            @RequestHeader(name = "Header2", required = false) String header2) {
+        
+        if (header1 == null || header1.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Custom message: Header1 is missing.");
+        }
+        
+        if (header2 == null || header2.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Custom message: Header2 is missing.");
+        }
+        
+        // Your logic to fetch data based on ID
+        return ResponseEntity.ok("Data for ID: " + id);
     }
 }
