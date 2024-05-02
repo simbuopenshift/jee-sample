@@ -1,7 +1,9 @@
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -10,17 +12,41 @@ public class ExampleController {
     @GetMapping("/example/{id}")
     public ResponseEntity<String> getById(
             @PathVariable String id,
-            @RequestHeader(name = "Header1") String header1,
-            @RequestHeader(name = "Header2") String header2) {
+            @RequestHeader(name = "Header1", required = false) String header1,
+            @RequestHeader(name = "Header2", required = false) String header2) {
+
+        List<String> missingHeaders = new ArrayList<>();
+
+        if (header1 == null || header1.isEmpty()) {
+            missingHeaders.add("Header1");
+        }
+
+        if (header2 == null || header2.isEmpty()) {
+            missingHeaders.add("Header2");
+        }
+
+        if (!missingHeaders.isEmpty()) {
+            throw new MultipleHeadersMissingException(missingHeaders);
+        }
 
         // Your logic here
         return ResponseEntity.ok("Data for ID: " + id);
     }
 
-    @ExceptionHandler(MissingRequestHeaderException.class)
-    public ResponseEntity<String> handleMissingRequestHeaderException(MissingRequestHeaderException ex) {
-        String headerName = ex.getHeaderName();
-        String errorMessage = "Required request header '" + headerName + "' is missing.";
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+    @ExceptionHandler(MultipleHeadersMissingException.class)
+    public ResponseEntity<String> handleMultipleHeadersMissingException(MultipleHeadersMissingException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing headers: " + ex.getMissingHeaders());
+    }
+
+    static class MultipleHeadersMissingException extends RuntimeException {
+        private List<String> missingHeaders;
+
+        public MultipleHeadersMissingException(List<String> missingHeaders) {
+            this.missingHeaders = missingHeaders;
+        }
+
+        public List<String> getMissingHeaders() {
+            return missingHeaders;
+        }
     }
 }
