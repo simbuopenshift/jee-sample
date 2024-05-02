@@ -1,37 +1,26 @@
-import org.springframework.stereotype.Component;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+@RestController
+@RequestMapping("/api")
+public class ExampleController {
 
-@Component
-public class HeaderFilter implements Filter {
+    @GetMapping("/example/{id}")
+    public ResponseEntity<String> getById(
+            @PathVariable String id,
+            @RequestHeader(name = "Header1") String header1,
+            @RequestHeader(name = "Header2") String header2) {
 
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        String header1 = httpRequest.getHeader("Header1");
-        String header2 = httpRequest.getHeader("Header2");
-
-        if (header1 == null || header1.isEmpty() || header2 == null || header2.isEmpty()) {
-            HttpServletResponse httpResponse = (HttpServletResponse) response;
-            httpResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            httpResponse.getWriter().write("Add both Header1 and Header2 headers.");
-            return;
-        }
-
-        chain.doFilter(request, response);
+        // Your logic here
+        return ResponseEntity.ok("Data for ID: " + id);
     }
 
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        // Initialization logic if needed
-    }
-
-    @Override
-    public void destroy() {
-        // Cleanup logic if needed
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<String> handleMissingRequestHeaderException(MissingRequestHeaderException ex) {
+        String headerName = ex.getHeaderName();
+        String errorMessage = "Required request header '" + headerName + "' is missing.";
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
     }
 }
