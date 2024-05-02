@@ -1,0 +1,21 @@
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.constraints.NotEmpty;
+
+@RestController
+@RequestMapping("/example")
+public class ExampleController {
+
+    @GetMapping("/{id}")
+    public ResponseEntity<String> getById(@PathVariable @NotEmpty(message = "ID must not be empty") String id) {
+        // Your logic to fetch data based on ID
+        return ResponseEntity.ok("Data for ID: " + id);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+}
