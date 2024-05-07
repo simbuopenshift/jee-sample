@@ -1,0 +1,18 @@
+import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
+
+public class DateConverter {
+    public static LocalDateTime convertToLocalDateTime(Date dateToConvert) {
+        return dateToConvert.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+    }
+
+    public static void main(String[] args) {
+        Date date = new Date(); // Your Date object
+        LocalDateTime localDateTime = convertToLocalDateTime(date);
+        System.out.println("Converted LocalDateTime: " + localDateTime);
+    }
+}
