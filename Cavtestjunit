@@ -1,18 +1,18 @@
 public class Main {
     public static void main(String[] args) {
         String input = "example.string.value";
-        String result = getValueAfterSecondDot(input);
-        System.out.println("Value after the second dot: " + result);
+        String result = trimValueAfterSecondDot(input);
+        System.out.println("Value before the second dot: " + result);
     }
 
-    public static String getValueAfterSecondDot(String input) {
+    public static String trimValueAfterSecondDot(String input) {
         int firstDotIndex = input.indexOf('.');
         if (firstDotIndex != -1) {
             int secondDotIndex = input.indexOf('.', firstDotIndex + 1);
             if (secondDotIndex != -1) {
-                return input.substring(secondDotIndex + 1);
+                return input.substring(0, secondDotIndex);
             }
         }
-        return ""; // or handle the case where there is no second dot
+        return input; // or handle the case where there is no second dot
     }
 }
