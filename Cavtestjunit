@@ -1,46 +1,53 @@
-import javax.validation.Constraint;
-import javax.validation.Payload;
-import java.lang.annotation.*;
+import javax.validation.GroupSequence;
 
-@Documented
-@Constraint(validatedBy = {ValidationEnumValueValidator.class})
-@Target({ElementType.FIELD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ValidationEnumValue {
-    String message() default "Invalid value";
+@GroupSequence({CreateValidationGroup.class, UpdateValidationGroup.class})
+public interface ValidationSequence {
+}
 
-    Class<?>[] groups() default {};
 
-    Class<? extends Payload>[] payload() default {};
+public interface CreateValidationGroup {
+}
 
-    Class<? extends Enum<?>> enumClass();
+public interface UpdateValidationGroup {
+}
+
+
+import javax.validation.groups.Default;
+
+public class EmployeeRequest {
+
+    @Validated(UpdateValidationGroup.class)
+    @ValidationEnumValue(enumClass = EmployeeEnum.class, groups = {Default.class, UpdateValidationGroup.class})
+    private String empName;
+
+    private String empId;
+
+    // Getters and setters
+}
+
+
+import org.springframework.validation.annotation.Validated;
+
+@RestController
+@RequestMapping("/employees")
+@Validated
+public class EmployeeController {
+
+    @PostMapping
+    public ResponseEntity<String> createEmployee(@Valid @RequestBody EmployeeRequest request) {
+        // Logic to create an employee
+        return ResponseEntity.status(HttpStatus.CREATED).body("Employee created successfully");
+    }
+
+    @PutMapping("/{empId}")
+    public ResponseEntity<String> updateEmployee(@PathVariable String empId, @Validated(UpdateValidationGroup.class) @RequestBody EmployeeRequest request) {
+        // Logic to update employee
+        return ResponseEntity.ok("Employee updated successfully");
+    }
 }
 
 
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
 
-public class ValidationEnumValueValidator implements ConstraintValidator<ValidationEnumValue, String> {
 
-    private Class<? extends Enum<?>> enumClass;
-
-    @Override
-    public void initialize(ValidationEnumValue constraintAnnotation) {
-        enumClass = constraintAnnotation.enumClass();
-    }
-
-    @Override
-    public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value == null) {
-            return true; // Null values are considered valid
-        }
-        try {
-            Enum.valueOf(enumClass, value);
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-}
 
