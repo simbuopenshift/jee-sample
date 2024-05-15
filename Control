@@ -1,19 +1,33 @@
-// BigQueryService.java
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.BigQueryOptions;
-import com.google.cloud.bigquery.QueryJobConfiguration;
-import com.google.cloud.bigquery.TableResult;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 
-@Service
-public class BigQueryService {
+public class DateTimeManipulation {
+    public static void main(String[] args) {
+        // Input date
+        String inputDate = "2025-01-01 09:12:33.001";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        LocalDateTime dateTime = LocalDateTime.parse(inputDate, formatter);
 
-    public Flux<Object> executeQuery(String sqlQuery) {
-        BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
-        QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(sqlQuery).build();
-        TableResult result = bigQuery.query(queryConfig);
+        // Manipulate based on status
+        String status = "daily"; // Example status
+        switch (status) {
+            case "daily":
+                dateTime = dateTime.plusDays(1);
+                break;
+            case "weekly":
+                dateTime = dateTime.plusWeeks(1);
+                break;
+            case "monthly":
+                dateTime = dateTime.plusMonths(1);
+                break;
+            // Add more cases for other statuses if needed
+            default:
+                // Handle unknown status
+                break;
+        }
 
-        return Flux.fromIterable(result.iterateAll());
+        // Output result
+        System.out.println("New Date Time: " + dateTime.format(formatter));
     }
 }
