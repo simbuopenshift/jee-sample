@@ -1,3 +1,40 @@
+Certainly! Below is a working sample demonstrating the usage of MapStruct to map an `Employee` entity to an `EmployeeDTO`, where the `empdetails` field is of type `EmployeeDetailsDTO`. The `mapToEmployeeDetailsJson` method is used to serialize and deserialize JSON data between the `empdetails` field of the entity and the `empdetails` field of the DTO.
+
+First, let's define the entity, DTO, and DTO for details:
+
+```java
+// Entity
+public class Employee {
+    private Long id;
+    private String name;
+    private String empdetails; // JSON data as a String
+    
+    // Getters and setters
+}
+
+// DTO
+public class EmployeeDTO {
+    private Long id;
+    private String name;
+    private EmployeeDetailsDTO empdetails;
+    
+    // Getters and setters
+}
+
+// DTO for details
+public class EmployeeDetailsDTO {
+    private String department;
+    private String position;
+    
+    // Getters and setters
+}
+```
+
+Next, let's define the mapper interface:
+
+```java
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -7,16 +44,16 @@ public interface EmployeeMapper {
 
     EmployeeMapper INSTANCE = Mappers.getMapper(EmployeeMapper.class);
 
+    @Mapping(target = "empdetails", expression = "java(mapToEmployeeDetailsDTO(entity.getEmpdetails()))")
     EmployeeDTO employeeToDTO(Employee entity);
 
-    @Mapping(target = "empdetails", expression = "java(mapToEmployeeDetailsDTO(entity.getEmpdetails()))")
-    Employee updateEmployeeFromDTO(EmployeeUpdateRequest request, @MappingTarget Employee entity);
+    @Mapping(target = "empdetails", expression = "java(mapToEmployeeDetailsJson(dto.getEmpdetails()))")
+    Employee updateEmployeeFromDTO(EmployeeDTO dto, Employee entity);
 
     default EmployeeDetailsDTO mapToEmployeeDetailsDTO(String empdetails) {
         // Deserialize JSON data to EmployeeDetailsDTO
-        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return objectMapper.readValue(empdetails, EmployeeDetailsDTO.class);
+            return new ObjectMapper().readValue(empdetails, EmployeeDetailsDTO.class);
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -25,12 +62,37 @@ public interface EmployeeMapper {
 
     default String mapToEmployeeDetailsJson(EmployeeDetailsDTO empdetailsDTO) {
         // Serialize EmployeeDetailsDTO to JSON
-        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return objectMapper.writeValueAsString(empdetailsDTO);
+            return new ObjectMapper().writeValueAsString(empdetailsDTO);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return null;
         }
     }
 }
+```
+
+Now, you can use the mapper to map between the `Employee` entity and `EmployeeDTO`:
+
+```java
+// Create an instance of the entity
+Employee employee = new Employee();
+employee.setId(1L);
+employee.setName("John Doe");
+
+// Create an instance of the DTO for details
+EmployeeDetailsDTO empDetailsDTO = new EmployeeDetailsDTO();
+empDetailsDTO.setDepartment("IT");
+empDetailsDTO.setPosition("Developer");
+
+// Set the DTO for details to the entity
+employee.setEmpdetails(new ObjectMapper().writeValueAsString(empDetailsDTO));
+
+// Map the entity to DTO
+EmployeeDTO employeeDTO = EmployeeMapper.INSTANCE.employeeToDTO(employee);
+
+// Output the result
+System.out.println("Employee DTO: " + employeeDTO.getId() + ", " + employeeDTO.getName() + ", " + employeeDTO.getEmpdetails().getDepartment() + ", " + employeeDTO.getEmpdetails().getPosition());
+```
+
+This example demonstrates mapping an `Employee` entity to an `EmployeeDTO` using MapStruct, where the `empdetails` field is serialized and deserialized between a JSON string and an object of type `EmployeeDetailsDTO`.
