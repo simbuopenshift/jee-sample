@@ -1,53 +1,36 @@
-import javax.validation.GroupSequence;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 
-@GroupSequence({CreateValidationGroup.class, UpdateValidationGroup.class})
-public interface ValidationSequence {
-}
+@Mapper
+public interface EmployeeMapper {
 
+    EmployeeMapper INSTANCE = Mappers.getMapper(EmployeeMapper.class);
 
-public interface CreateValidationGroup {
-}
+    EmployeeDTO employeeToDTO(Employee entity);
 
-public interface UpdateValidationGroup {
-}
+    @Mapping(target = "empdetails", expression = "java(mapToEmployeeDetailsDTO(entity.getEmpdetails()))")
+    Employee updateEmployeeFromDTO(EmployeeUpdateRequest request, @MappingTarget Employee entity);
 
-
-import javax.validation.groups.Default;
-
-public class EmployeeRequest {
-
-    @Validated(UpdateValidationGroup.class)
-    @ValidationEnumValue(enumClass = EmployeeEnum.class, groups = {Default.class, UpdateValidationGroup.class})
-    private String empName;
-
-    private String empId;
-
-    // Getters and setters
-}
-
-
-import org.springframework.validation.annotation.Validated;
-
-@RestController
-@RequestMapping("/employees")
-@Validated
-public class EmployeeController {
-
-    @PostMapping
-    public ResponseEntity<String> createEmployee(@Valid @RequestBody EmployeeRequest request) {
-        // Logic to create an employee
-        return ResponseEntity.status(HttpStatus.CREATED).body("Employee created successfully");
+    default EmployeeDetailsDTO mapToEmployeeDetailsDTO(String empdetails) {
+        // Deserialize JSON data to EmployeeDetailsDTO
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readValue(empdetails, EmployeeDetailsDTO.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    @PutMapping("/{empId}")
-    public ResponseEntity<String> updateEmployee(@PathVariable String empId, @Validated(UpdateValidationGroup.class) @RequestBody EmployeeRequest request) {
-        // Logic to update employee
-        return ResponseEntity.ok("Employee updated successfully");
+    default String mapToEmployeeDetailsJson(EmployeeDetailsDTO empdetailsDTO) {
+        // Serialize EmployeeDetailsDTO to JSON
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(empdetailsDTO);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
-
-
-
-
-
-
