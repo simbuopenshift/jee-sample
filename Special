@@ -1,0 +1,53 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+public class PipeSeparatedDataParser {
+
+    public static void main(String[] args) {
+        String filePath = "your_file_path.txt"; // Update with your file path
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            StringBuilder sb = new StringBuilder();
+            while ((line = br.readLine()) != null) {
+                // Remove surrounding double quotes if present
+                line = line.replaceAll("^\"|\"$", "");
+
+                // Check for special characters and handle accordingly
+                String[] parts = line.split("\\|");
+                for (int i = 0; i < parts.length; i++) {
+                    String part = parts[i];
+                    sb.append(part);
+                    // Append "|" only if it's not the last part or if it's followed by a newline
+                    if (i < parts.length - 1 || line.endsWith("|")) {
+                        sb.append("|");
+                    }
+                }
+                // If line doesn't end with "|" or it's the last line, print the record
+                if (!line.endsWith("|") || !hasNextLine(br)) {
+                    System.out.println(sb.toString());
+                    sb = new StringBuilder();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static boolean containsSpecialCharacter(String str) {
+        return !str.matches("[a-zA-Z0-9| ]*");
+    }
+
+    private static boolean hasNextLine(BufferedReader br) {
+        try {
+            br.mark(1);
+            int nextChar = br.read();
+            br.reset();
+            return nextChar != -1;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+}
