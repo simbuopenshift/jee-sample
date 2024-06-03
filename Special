@@ -8,46 +8,26 @@ public class PipeSeparatedDataParser {
         String filePath = "your_file_path.txt"; // Update with your file path
 
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
             StringBuilder sb = new StringBuilder();
+            String line;
             while ((line = br.readLine()) != null) {
                 // Remove surrounding double quotes if present
                 line = line.replaceAll("^\"|\"$", "");
 
-                // Check for special characters and handle accordingly
-                String[] parts = line.split("\\|");
-                for (int i = 0; i < parts.length; i++) {
-                    String part = parts[i];
-                    sb.append(part);
-                    // Append "|" only if it's not the last part or if it's followed by a newline
-                    if (i < parts.length - 1 || line.endsWith("|")) {
-                        sb.append("|");
-                    }
-                }
-                // If line doesn't end with "|" or it's the last line, print the record
-                if (!line.endsWith("|") || !hasNextLine(br)) {
+                if (line.endsWith("|")) {
+                    sb.append(line.substring(0, line.length() - 1)); // Append without the ending "|"
+                } else {
+                    sb.append(line);
                     System.out.println(sb.toString());
-                    sb = new StringBuilder();
+                    sb = new StringBuilder(); // Reset StringBuilder
                 }
+            }
+            // Print the last record if it's not empty
+            if (sb.length() > 0) {
+                System.out.println(sb.toString());
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    private static boolean containsSpecialCharacter(String str) {
-        return !str.matches("[a-zA-Z0-9| ]*");
-    }
-
-    private static boolean hasNextLine(BufferedReader br) {
-        try {
-            br.mark(1);
-            int nextChar = br.read();
-            br.reset();
-            return nextChar != -1;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
         }
     }
 }
