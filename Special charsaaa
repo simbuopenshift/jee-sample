@@ -1,0 +1,37 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+public class PipeSeparatedDataParser {
+
+    public static void main(String[] args) {
+        String filePath = "your_file_path.txt"; // Update with your file path
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                // Remove surrounding double quotes if present
+                line = line.replaceAll("^\"|\"$", "");
+
+                // Check for special characters and handle accordingly
+                String[] parts = line.split("\\|");
+                StringBuilder sb = new StringBuilder();
+                for (String part : parts) {
+                    if (containsSpecialCharacter(part)) {
+                        sb.append(part).append("|");
+                    } else {
+                        System.out.print(sb.toString() + part + "|");
+                        sb = new StringBuilder();
+                    }
+                }
+                System.out.println();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static boolean containsSpecialCharacter(String str) {
+        return !str.matches("[a-zA-Z0-9| ]*");
+    }
+}
