@@ -1,33 +1,28 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import javax.servlet.http.HttpServletRequest;
 
-public class PipeSeparatedDataParser {
+@Component
+public class RequestUtils {
 
-    public static void main(String[] args) {
-        String filePath = "your_file_path.txt"; // Update with your file path
+    @Autowired
+    private HttpServletRequest request;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                // Remove surrounding double quotes if present
-                line = line.replaceAll("^\"|\"$", "");
-
-                if (line.endsWith("|")) {
-                    sb.append(line.substring(0, line.length() - 1)); // Append without the ending "|"
-                } else {
-                    sb.append(line);
-                    System.out.println(sb.toString());
-                    sb = new StringBuilder(); // Reset StringBuilder
-                }
-            }
-            // Print the last record if it's not empty
-            if (sb.length() > 0) {
-                System.out.println(sb.toString());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    public HttpServletRequest getCurrentRequest() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            return attributes.getRequest();
         }
+        return null;
+    }
+
+    public String getClientIdFromCurrentRequest() {
+        HttpServletRequest currentRequest = getCurrentRequest();
+        if (currentRequest != null) {
+            return currentRequest.getHeader("Client-ID");
+        }
+        return null;
     }
 }
