@@ -5,6 +5,7 @@ import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.ExtractJobConfiguration;
 import com.google.cloud.bigquery.JobStatus;
+import com.google.cloud.bigquery.BigQueryException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -52,29 +53,29 @@ public class BigQueryTest {
         JobInfo queryJobInfo = JobInfo.newBuilder(queryConfig).build();
 
         // Stub the bigquery.create method to return the mock query job
-        Mockito.when(bigquery.create(any(JobInfo.class))).thenReturn(queryJob);
+        when(bigquery.create(eq(queryJobInfo))).thenReturn(queryJob);
 
         // Mock the behavior of queryJob.getConfiguration() to return the queryConfig
-        Mockito.when(queryJob.getConfiguration()).thenReturn(queryConfig);
+        when(queryJob.getConfiguration()).thenReturn(queryConfig);
 
         // Mock the behavior of queryJob.getStatus() and queryJob.getStatus().getError()
-        Mockito.when(queryJob.getStatus()).thenReturn(jobStatus);
-        Mockito.when(jobStatus.getError()).thenReturn(null);
+        when(queryJob.getStatus()).thenReturn(jobStatus);
+        when(jobStatus.getError()).thenReturn(null);
 
         // Mock the behavior of queryConfig.getDestinationTable() to return the tableId
-        Mockito.when(((QueryJobConfiguration) queryJob.getConfiguration()).getDestinationTable()).thenReturn(tableId);
+        when(((QueryJobConfiguration) queryJob.getConfiguration()).getDestinationTable()).thenReturn(tableId);
 
         // Mock the ExtractJobConfiguration
-        ExtractJobConfiguration extractJobConfiguration = ExtractJobConfiguration.newBuilder(tableId, blobUri)
+        ExtractJobConfiguration extractJobConfig = ExtractJobConfiguration.newBuilder(tableId, blobUri)
                 .setPrintHeader(false)
                 .setFormat(csv)
                 .build();
 
         // Mock the JobInfo for the extract job
-        JobInfo extractJobInfo = JobInfo.newBuilder(extractJobConfiguration).build();
+        JobInfo extractJobInfo = JobInfo.newBuilder(extractJobConfig).build();
 
         // Stub the bigquery.create method to return the mock extract job
-        Mockito.when(bigquery.create(any(JobInfo.class))).thenReturn(extractJob);
+        when(bigquery.create(eq(extractJobInfo))).thenReturn(extractJob);
 
         // Call the method under test
         yourClassUnderTest.methodUnderTest(query, blobUri);
@@ -84,5 +85,56 @@ public class BigQueryTest {
 
         // Verify that bigquery.create was called with the correct JobInfo for the extract job
         verify(bigquery).create(eq(extractJobInfo));
+
+        // Ensure no more interactions with the BigQuery mock
+        verifyNoMoreInteractions(bigquery);
+    }
+
+    @Test
+    public void testQueryJobIsNull() {
+        // Define the query and other parameters
+        String query = "SELECT * FROM your_table";
+        String blobUri = "gs://your-bucket/your-object";
+
+        // Stub the bigquery.create method to return null
+        when(bigquery.create(any(JobInfo.class))).thenReturn(null);
+
+        // Assert that the method under test throws an exception
+        assertThrows(Exception.class, () -> yourClassUnderTest.methodUnderTest(query, blobUri));
+
+        // Verify that bigquery.create was called once
+        verify(bigquery).create(any(JobInfo.class));
+
+        // Ensure no more interactions with the BigQuery mock
+        verifyNoMoreInteractions(bigquery);
+    }
+
+    @Test
+    public void testQueryJobHasError() {
+        // Define the query and other parameters
+        String query = "SELECT * FROM your_table";
+        String blobUri = "gs://your-bucket/your-object";
+
+        // Mock the QueryJobConfiguration
+        QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query).build();
+
+        // Mock the JobInfo for the query job
+        JobInfo queryJobInfo = JobInfo.newBuilder(queryConfig).build();
+
+        // Stub the bigquery.create method to return the mock query job
+        when(bigquery.create(eq(queryJobInfo))).thenReturn(queryJob);
+
+        // Mock the behavior of queryJob.getStatus() and queryJob.getStatus().getError()
+        when(queryJob.getStatus()).thenReturn(jobStatus);
+        when(jobStatus.getError()).thenReturn(new BigQueryException(500, "Error occurred"));
+
+        // Assert that the method under test throws an exception
+        assertThrows(Exception.class, () -> yourClassUnderTest.methodUnderTest(query, blobUri));
+
+        // Verify that bigquery.create was called once
+        verify(bigquery).create(eq(queryJobInfo));
+
+        // Ensure no more interactions with the BigQuery mock
+        verifyNoMoreInteractions(bigquery);
     }
 }
