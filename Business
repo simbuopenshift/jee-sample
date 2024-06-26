@@ -1,83 +1,17 @@
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.Job;
-import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.QueryJobConfiguration;
-import com.google.cloud.bigquery.TableId;
-import com.google.cloud.bigquery.ExtractJobConfiguration;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import static org.mockito.Mockito.*;
-
-public class BigQueryTest {
-
-    @Mock
-    private BigQuery bigquery;
-
-    @Mock
-    private Job queryJob;
-
-    @Mock
-    private Job extractJob;
-
-    @Mock
-    private TableId tableId;
-
-    @Mock
-    private ExtractJobConfiguration extractJobConfiguration;
-
-    @InjectMocks
-    private YourClassUnderTest yourClassUnderTest;
-
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
-    @Test
-    public void testBigQueryOperations() {
-        // Define the query and other parameters
-        String query = "SELECT * FROM your_table";
-        String csv = "CSV";
-        String blobUri = "gs://your-bucket/your-object";
-
-        // Mock the QueryJobConfiguration
-        QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query).build();
-
-        // Mock the JobInfo for the query job
-        JobInfo queryJobInfo = JobInfo.newBuilder(queryConfig).build();
-
-        // Stub the bigquery.create method to return the mock query job
-        Mockito.when(bigquery.create(any(JobInfo.class))).thenReturn(queryJob);
-
-        // Mock the behavior of queryJob.getConfiguration() to return the queryConfig
-        Mockito.when(queryJob.getConfiguration()).thenReturn(queryConfig);
-
-        // Mock the behavior of queryConfig.getDestinationTable() to return the tableId
-        Mockito.when(((QueryJobConfiguration) queryJob.getConfiguration()).getDestinationTable()).thenReturn(tableId);
-
-        // Mock the ExtractJobConfiguration
-        extractJobConfiguration = ExtractJobConfiguration.newBuilder(tableId, blobUri)
-                .setPrintHeader(false)
-                .setFormat(csv)
-                .build();
-
-        // Mock the JobInfo for the extract job
-        JobInfo extractJobInfo = JobInfo.newBuilder(extractJobConfiguration).build();
-
-        // Stub the bigquery.create method to return the mock extract job
-        Mockito.when(bigquery.create(any(JobInfo.class))).thenReturn(extractJob);
-
-        // Call the method under test
-        yourClassUnderTest.methodUnderTest(query, blobUri);
-
-        // Verify that bigquery.create was called with the correct JobInfo for the query job
-        verify(bigquery).create(eq(queryJobInfo));
-
-        // Verify that bigquery.create was called with the correct JobInfo for the extract job
-        verify(bigquery).create(eq(extractJobInfo));
-    }
-}
+WITH ImageCTE AS (
+    SELECT 
+        assetid, 
+        sellid,
+        ROW_NUMBER() OVER (ORDER BY assetid) AS row_num
+    FROM 'flat' si 
+    LEFT JOIN items i 
+    ON si.product_id = i.product_id
+    WHERE refId IN ('a', 'b')
+)
+SELECT 
+    MAX(CASE WHEN row_num = 1 THEN assetid END) AS image1,
+    MAX(CASE WHEN row_num = 2 THEN assetid END) AS image2,
+    MAX(CASE WHEN row_num = 3 THEN assetid END) AS image3,
+    MAX(CASE WHEN row_num = 4 THEN assetid END) AS image4,
+    MAX(CASE WHEN row_num = 5 THEN assetid END) AS image5
+FROM ImageCTE;
