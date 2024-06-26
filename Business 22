@@ -1,0 +1,17 @@
+WITH ImageCTE AS (
+    SELECT 
+        assetid, 
+        sellid,
+        ROW_NUMBER() OVER (ORDER BY assetid) AS row_num
+    FROM 'flat' si 
+    LEFT JOIN items i 
+    ON si.product_id = i.product_id
+    WHERE refId IN ('a', 'b')
+)
+SELECT 
+    MAX(CASE WHEN row_num = 1 THEN assetid END) AS image1,
+    MAX(CASE WHEN row_num = 2 THEN assetid END) AS image2,
+    MAX(CASE WHEN row_num = 3 THEN assetid END) AS image3,
+    MAX(CASE WHEN row_num = 4 THEN assetid END) AS image4,
+    MAX(CASE WHEN row_num = 5 THEN assetid END) AS image5
+FROM ImageCTE;
