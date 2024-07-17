@@ -1,2 +1,8 @@
 SELECT COALESCE(CONCAT('"', REPLACE(id, E'\n', ''), '"'), '') AS formatted_id
 FROM employee;
+
+SELECT 
+    COALESCE(CONCAT('"', REPLACE(id, E'\n', ''), '"'), '') AS id,
+    ', ',
+    COALESCE(CONCAT('"', REPLACE(name, E'\n', ''), '"'), '') AS name
+FROM employee;
