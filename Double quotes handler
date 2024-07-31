@@ -1,0 +1,8 @@
+SELECT 
+  CASE 
+    WHEN headerColumn LIKE '%"%'' THEN 
+      concat(coalesce(concat('\"', replace(headerColumn, chr(10), ' '), '\"'), ' '), ', ', coalesce(concat('\"', replace(headerColumn, chr(10), ' '), '\"'), ' '))
+    ELSE 
+      concat(coalesce(concat('\"', replace(headerColumn, chr(10), ' '), '\"'), ' '), ', ', coalesce(concat('\"', replace(headerColumn, chr(10), ' '), '\"'), ' '))
+  END AS ValueData 
+FROM employee
