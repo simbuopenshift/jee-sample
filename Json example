@@ -1,0 +1,119 @@
+[21/08, 7:38 pm] Meta AI: Here's an example JSON string with multiple nested documents within a list:
+
+```
+{
+  "address": [
+    {
+      "street": "123 Main St",
+      "city": "Anytown",
+      "state": "CA",
+      "zip": "12345",
+      "country": {
+        "name": "USA",
+        "code": "US"
+      }
+    },
+    {
+      "street": "456 Elm St",
+      "city": "Othertown",
+      "state": "NY",
+      "zip": "67890",
+      "country": {
+        "name": "USA",
+        "code": "US"
+      },
+      "additionalInfo": {
+        "aptNumber": "101",
+        "buildingName": "The Building"
+      }
+    }
+  ]
+}
+```
+
+This JSON string contains:
+
+- An `address` array with two nested documents
+- Each document has `street`, `city`, `state`, `zip`, and `country` properties
+- The `country` property is an object with `name` and `code` properties
+- The second document has an additional `additionalInfo` object with `aptNumber` and `buildingName` properties
+
+You can use this JSON string to test the Java code I provided earlier. The code should generate an XML string with the following format:
+
+```
+<address>
+  <street>123 Main St</street>
+  <city>Anytown</city>
+  <state>CA</state>
+  <zip>12345</zip>
+  <country>
+    <name>USA</name>
+    <code>US</code>
+  </country>
+</address>
+<address>
+  <street>456 Elm St</street>
+  <city>Othertown</city>
+  <state>NY</state>
+  <zip>67890</zip>
+  <country>
+    <name>USA</name>
+    <code>US</code>
+  </country>
+  <additionalInfo>
+    <aptNumber>101</aptNumber>
+    <buildingName>The Building</buildingName>
+  </additionalInfo>
+</address>
+```
+
+Note that the code will recursively traverse the JSON object and generate XML elements for each property, including nested objects and arrays.
+[21/08, 7:38 pm] Meta AI: Here's an example JSON string with multiple nested documents within a list:
+
+```
+{
+  "address": [
+    {
+      "street": "123 Main St",
+      "city": "Anytown",
+      "state": "CA",
+      "zip": "12345",
+      "country": {
+        "name": "USA",
+        "code": "US"
+      }
+    },
+    {
+      "street": "456 Elm St",
+      "city": "Othertown",
+      "state": "NY",
+      "zip": "67890",
+      "country": {
+        "name": "USA",
+        "code": "US"
+      },
+      "additionalInfo": {
+        "aptNumber": "101",
+        "buildingName": "The Building"
+      }
+    }
+  ]
+}
+```
+
+This JSON string contains:
+
+- An `address` array with two nested documents
+- Each document has `street`, `city`, `state`, `zip`, and `country` properties
+- The `country` property is an object with `name` and `code` properties
+- The second document has an additional `additionalInfo` object with `aptNumber` and `buildingName` properties
+
+You can use this JSON string to test the Java code I provided earlier. The code should generate an XML string with the following format:
+
+```
+<address>
+  <street>123 Main St</street>
+  <city>Anytown</city>
+  <state>CA</state>
+  <zip
+```
