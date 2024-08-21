@@ -1,0 +1,37 @@
+Here's a Java code snippet that creates the desired XML format from a generic JSON string:
+
+```
+import org.json.JSONObject;
+
+public class JsonToXmlConverter {
+
+    public static String convertToJsonToXml(String jsonString) {
+        JSONObject jsonObject = new JSONObject(jsonString);
+        StringBuilder xmlBuilder = new StringBuilder("<address>");
+
+        for (String key : jsonObject.keySet()) {
+            xmlBuilder.append("<").append(key).append(">").append(jsonObject.get(key)).append("</").append(key).append(">");
+        }
+
+        xmlBuilder.append("</address>");
+        return xmlBuilder.toString();
+    }
+
+    public static void main(String[] args) {
+        String jsonString = "{\"street\": \"123 Main St\", \"city\": \"Anytown\", \"state\": \"CA\", \"zip\": \"12345\"}";
+        String xmlString = convertToJsonToXml(jsonString);
+        System.out.println(xmlString);
+    }
+}
+```
+
+This code:
+
+1. Uses the `org.json` library to parse the JSON string into a `JSONObject`.
+2. Iterates over the key-value pairs in the `JSONObject` using a `for` loop.
+3. Appends each key-value pair to an `xmlBuilder` as an XML element.
+4. Returns the complete XML string.
+
+You can replace the `jsonString` variable in the `main` method with any JSON string, and the code will generate the corresponding XML format.
+
+Note: This code assumes that the JSON string is a flat object with key-value pairs. If your JSON string has a nested structure, you may need to modify the code accordingly.
