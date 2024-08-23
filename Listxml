@@ -1,0 +1,61 @@
+Here's an updated Java code snippet that can handle the JSON string with a list of nested documents:
+
+```
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class JsonToXmlConverter {
+
+    public static String convertJsonToXml(String jsonString) {
+        JSONObject jsonObject = new JSONObject(jsonString);
+        StringBuilder xmlBuilder = new StringBuilder();
+
+        for (String key : jsonObject.keySet()) {
+            Object value = jsonObject.get(key);
+            if (value instanceof JSONArray) {
+                JSONArray array = (JSONArray) value;
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject obj = array.getJSONObject(i);
+                    xmlBuilder.append("<").append(key).append(">");
+                    xmlBuilder.append(convertJsonObjToXml(obj));
+                    xmlBuilder.append("</").append(key).append(">");
+                }
+            } else {
+                xmlBuilder.append("<").append(key).append(">").append(value).append("</").append(key).append(">");
+            }
+        }
+
+        return xmlBuilder.toString();
+    }
+
+    private static String convertJsonObjToXml(JSONObject obj) {
+        StringBuilder xmlBuilder = new StringBuilder();
+        for (String key : obj.keySet()) {
+            Object value = obj.get(key);
+            if (value instanceof JSONObject) {
+                JSONObject nestedObj = (JSONObject) value;
+                xmlBuilder.append("<").append(key).append(">");
+                xmlBuilder.append(convertJsonObjToXml(nestedObj));
+                xmlBuilder.append("</").append(key).append(">");
+            } else {
+                xmlBuilder.append("<").append(key).append(">").append(value).append("</").append(key).append(">");
+            }
+        }
+        return xmlBuilder.toString();
+    }
+
+    public static void main(String[] args) {
+        String jsonString = "{\"address\":[{\"street\":\"123 Main St\",\"city\":\"Anytown\",\"state\":\"CA\",\"zip\":\"12345\",\"country\":{\"name\":\"USA\",\"code\":\"US\"}},{\"street\":\"456 Elm St\",\"city\":\"Othertown\",\"state\":\"NY\",\"zip\":\"67890\",\"country\":{\"name\":\"USA\",\"code\":\"US\"},\"additionalInfo\":{\"aptNumber\":\"101\",\"buildingName\":\"The Building\"}}]}";
+        String xmlString = convertJsonToXml(jsonString);
+        System.out.println(xmlString);
+    }
+}
+```
+
+This updated code:
+
+1. Checks if the value is a `JSONArray` and iterates over the array to handle lists of nested documents.
+2. Recursively calls the `convertJsonObjToXml` method to handle nested `JSONObject`s.
+3. Generates XML elements for each property, including nested objects and arrays.
+
+This code should produce the desired XML output for the provided JSON string.
