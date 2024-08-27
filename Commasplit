@@ -1,0 +1,25 @@
+Here is a Java code snippet that checks if the string `a` contains exactly two values separated by a comma and a space (", "), and if so, splits it into two separate strings:
+
+```
+public class Main {
+    public static void main(String[] args) {
+        String a = "USA, Ca";
+        String[] splitStrings = a.split(", ");
+        if (splitStrings.length == 2) {
+            String firstString = splitStrings[0];
+            String secondString = splitStrings[1];
+            System.out.println("First String: " + firstString);
+            System.out.println("Second String: " + secondString);
+        } else {
+            System.out.println("String does not contain exactly two values.");
+        }
+    }
+}
+```
+
+In this code:
+
+- We use the `split()` method to split the string `a` into an array of strings using ", " as the delimiter.
+- We check if the length of the resulting array is exactly 2.
+- If it is, we assign the first and second elements of the array to separate strings (`firstString` and `secondString`) and print them.
+- If not, we print a message indicating that the string does not contain exactly two values.
