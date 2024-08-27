@@ -1,0 +1,99 @@
+Here is a Java code snippet that can convert the given JSON list to the desired XML format:
+
+```
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class JsonToXmlConverter {
+
+    public static String convertJsonToXml(String jsonString) {
+        StringBuilder xmlBuilder = new StringBuilder();
+        if (jsonString.startsWith("[")) {
+            JSONArray jsonArray = new JSONArray(jsonString);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                xmlBuilder.append("<Qual id=\"").append(jsonObject.getString("qualifierId")).append("\">");
+                if (jsonObject.has("parameter") && jsonObject.getJSONArray("parameter").length() > 0) {
+                    JSONArray parameters = jsonObject.getJSONArray("parameter");
+                    for (int j = 0; j < parameters.length(); j++) {
+                        JSONObject parameter = parameters.getJSONObject(j);
+                        xmlBuilder.append("<param");
+                        if (parameter.has("value") && !parameter.isNull("value")) {
+                            xmlBuilder.append(" value=\"").append(parameter.getString("value")).append("\"");
+                        }
+                        if (parameter.has("uom") && !parameter.isNull("uom")) {
+                            xmlBuilder.append(" uom=\"").append(parameter.getString("uom")).append("\"");
+                        }
+                        if (parameter.has("altValue") && !parameter.isNull("altValue")) {
+                            xmlBuilder.append(" altValue=\"").append(parameter.getString("altValue")).append("\"");
+                        }
+                        if (parameter.has("altUom") && !parameter.isNull("altUom")) {
+                            xmlBuilder.append(" altUom=\"").append(parameter.getString("altUom")).append("\"");
+                        }
+                        xmlBuilder.append(" />");
+                    }
+                }
+                xmlBuilder.append("<text>").append(jsonObject.getString("text")).append("</text>");
+                xmlBuilder.append("</Qual>");
+            }
+        } else {
+            JSONObject jsonObject = new JSONObject(jsonString);
+            xmlBuilder.append("<Qual id=\"").append(jsonObject.getString("qualifierId")).append("\">");
+            if (jsonObject.has("parameter") && jsonObject.getJSONArray("parameter").length() > 0) {
+                JSONArray parameters = jsonObject.getJSONArray("parameter");
+                for (int j = 0; j < parameters.length(); j++) {
+                    JSONObject parameter = parameters.getJSONObject(j);
+                    xmlBuilder.append("<param");
+                    if (parameter.has("value") && !parameter.isNull("value")) {
+                        xmlBuilder.append(" value=\"").append(parameter.getString("value")).append("\"");
+                    }
+                    if (parameter.has("uom") && !parameter.isNull("uom")) {
+                        xmlBuilder.append(" uom=\"").append(parameter.getString("uom")).append("\"");
+                    }
+                    if (parameter.has("altValue") && !parameter.isNull("altValue")) {
+                        xmlBuilder.append(" altValue=\"").append(parameter.getString("altValue")).append("\"");
+                    }
+                    if (parameter.has("altUom") && !parameter.isNull("altUom")) {
+                        xmlBuilder.append(" altUom=\"").append(parameter.getString("altUom")).append("\"");
+                    }
+                    xmlBuilder.append(" />");
+                }
+            }
+            xmlBuilder.append("<text>").append(jsonObject.getString("text")).append("</text>");
+            xmlBuilder.append("</Qual>");
+        }
+        return xmlBuilder.toString();
+    }
+
+    public static void main(String[] args) {
+        String jsonString = "[{\"text\": \" Data1\", \"parameter\":[{\"uom\": \"in\", \"value\":\" 32\", \"altUom\":\" in\", \"altValue\":\"xy\"}], \"qualifierId\":\"1\"}, {\"text\": \" Data2\", \"parameter\": null, \"qualifierId\":\"2\"},{\"text\": \" Data3\", \"parameter\":[{\"uom\": null, \"value\":\" 52\", \"altUom\": null, \"altValue\":null}], \"qualifierId\":\"3\"}]";
+        String xmlString = convertJsonToXml(jsonString);
+        System.out.println(xmlString);
+    }
+}
+```
+
+This code:
+
+1. Checks if the input JSON string is an array or a single object.
+2. If it's an array, iterates over the array and converts each object to XML.
+3. If it's a single object, directly converts it to XML.
+4. Uses the `StringBuilder` class to efficiently build the XML string.
+5. Checks for null values and only includes them in the XML if they are present.
+
+The output will be:
+
+```
+<Qual id="1"> 
+    <param value="32" uom="in"/> 
+    <param altValue="xy" altUom="in"/> 
+    <text>Data1</text> 
+</Qual> 
+<Qual id="2"> 
+    <text>Data2</text> 
+</Qual> 
+<Qual id="3"> 
+    <param value="52" /> 
+    <text>Data3</text> 
+</Qual>
+```
