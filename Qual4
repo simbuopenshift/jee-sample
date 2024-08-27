@@ -1,0 +1,80 @@
+Here is the updated Java code that handles the case where `parameter` is null without a JSONArray in the second document within the list JSON:
+
+```
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class JsonToXmlConverter {
+
+    public static String convertJsonToXml(String jsonString) {
+        StringBuilder xmlBuilder = new StringBuilder();
+        if (jsonString.startsWith("[")) {
+            JSONArray jsonArray = new JSONArray(jsonString);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                xmlBuilder.append("<Qual id=\"").append(jsonObject.getInt("qualifierId")).append("\">");
+                if (jsonObject.has("parameter") && jsonObject.get("parameter") != null) {
+                    if (jsonObject.getJSONArray("parameter") != null) {
+                        JSONArray parameters = jsonObject.getJSONArray("parameter");
+                        for (int j = 0; j < parameters.length(); j++) {
+                            JSONObject parameter = parameters.getJSONObject(j);
+                            xmlBuilder.append("<param");
+                            if (parameter.has("value") && !parameter.isNull("value")) {
+                                xmlBuilder.append(" value=\"").append(parameter.getString("value")).append("\"");
+                            }
+                            if (parameter.has("uom") && !parameter.isNull("uom")) {
+                                xmlBuilder.append(" uom=\"").append(parameter.getString("uom")).append("\"");
+                            }
+                            if (parameter.has("altValue") && !parameter.isNull("altValue")) {
+                                xmlBuilder.append(" altValue=\"").append(parameter.getString("altValue")).append("\"");
+                            }
+                            if (parameter.has("altUom") && !parameter.isNull("altUom")) {
+                                xmlBuilder.append(" altUom=\"").append(parameter.getString("altUom")).append("\"");
+                            }
+                            xmlBuilder.append(" />");
+                        }
+                    }
+                }
+                xmlBuilder.append("<text>").append(jsonObject.getString("text")).append("</text>");
+                xmlBuilder.append("</Qual>");
+            }
+        } else {
+            JSONObject jsonObject = new JSONObject(jsonString);
+            xmlBuilder.append("<Qual id=\"").append(jsonObject.getInt("qualifierId")).append("\">");
+            if (jsonObject.has("parameter") && jsonObject.get("parameter") != null) {
+                if (jsonObject.getJSONArray("parameter") != null) {
+                    JSONArray parameters = jsonObject.getJSONArray("parameter");
+                    for (int j = 0; j < parameters.length(); j++) {
+                        JSONObject parameter = parameters.getJSONObject(j);
+                        xmlBuilder.append("<param");
+                        if (parameter.has("value") && !parameter.isNull("value")) {
+                            xmlBuilder.append(" value=\"").append(parameter.getString("value")).append("\"");
+                        }
+                        if (parameter.has("uom") && !parameter.isNull("uom")) {
+                            xmlBuilder.append(" uom=\"").append(parameter.getString("uom")).append("\"");
+                        }
+                        if (parameter.has("altValue") && !parameter.isNull("altValue")) {
+                            xmlBuilder.append(" altValue=\"").append(parameter.getString("altValue")).append("\"");
+                        }
+                        if (parameter.has("altUom") && !parameter.isNull("altUom")) {
+                            xmlBuilder.append(" altUom=\"").append(parameter.getString("altUom")).append("\"");
+                        }
+                        xmlBuilder.append(" />");
+                    }
+                }
+            }
+            xmlBuilder.append("<text>").append(jsonObject.getString("text")).append("</text>");
+            xmlBuilder.append("</Qual>");
+        }
+        return xmlBuilder.toString();
+    }
+
+    public static void main(String[] args) {
+        String jsonString = "[{\"text\": \" Data1\", \"parameter\":[{\"uom\": \"in\", \"value\":\" 32\", \"altUom\":\" in\", \"altValue\":\"xy\"}], \"qualifierId\":1}, {\"text\": \" Data2\", \"parameter\": null, \"qualifierId\":2},{\"text\": \" Data3\", \"parameter\":[{\"uom\": null, \"value\":\" 52\", \"altUom\": null, \"altValue\":null}], \"qualifierId\":3}]";
+        String xmlString = convertJsonToXml(jsonString);
+        System.out.println(xmlString);
+    }
+}
+```
+
+This updated code checks if `parameter` is null before trying to access it as a JSONArray, preventing the error. It also uses `getInt` to retrieve the `qualifierId` as an integer.
