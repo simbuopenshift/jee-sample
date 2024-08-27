@@ -1,0 +1,45 @@
+Here is a Java code snippet that can convert the given JSON list to the desired XML format:
+
+```
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class JsonToXmlConverter {
+
+    public static String convertJsonToXml(String jsonString) {
+        StringBuilder xmlBuilder = new StringBuilder();
+        if (jsonString.startsWith("[")) {
+            JSONArray jsonArray = new JSONArray(jsonString);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                xmlBuilder.append("<Note lang=\"").append(jsonObject.getString("lang")).append("\">").append(jsonObject.getString("value")).append("</Note>");
+            }
+        } else {
+            JSONObject jsonObject = new JSONObject(jsonString);
+            xmlBuilder.append("<Note lang=\"").append(jsonObject.getString("lang")).append("\">").append(jsonObject.getString("value")).append("</Note>");
+        }
+        return xmlBuilder.toString();
+    }
+
+    public static void main(String[] args) {
+        String jsonString = "[{\"lang\": \"en\", \"value\": \" w/o data-1\"}, {\"lang\": \"en\", \"value\": \" w/o data-2\"}]";
+        String xmlString = convertJsonToXml(jsonString);
+        System.out.println(xmlString);
+    }
+}
+```
+
+This code:
+
+1. Checks if the input JSON string is an array or a single object.
+2. If it's an array, iterates over the array and converts each object to XML.
+3. If it's a single object, directly converts it to XML.
+4. Uses the `StringBuilder` class to efficiently build the XML string.
+
+The output will be:
+
+```
+<Note lang="en"> w/o data-1</Note><Note lang="en"> w/o data-2</Note>
+```
+
+This code is generic and can handle both a list of JSON objects and a single JSON object.
