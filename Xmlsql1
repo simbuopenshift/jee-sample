@@ -32,4 +32,48 @@ FROM
   table;
 ```
 
+Here is the JSON string:
+
+```
+[
+  {
+    "qualifierId": "1",
+    "text": "Data1",
+    "parameter": [
+      {
+        "uom": "in",
+        "value": "32",
+        "altUom": "in",
+        "altValue": "xy"
+      },
+      {
+        "uom": "in",
+        "value": "32",
+        "altUom": "in",
+        "altValue": "xy"
+      }
+    ]
+  },
+  {
+    "qualifierId": "2",
+    "text": "Data2",
+    "parameter": null
+  },
+  {
+    "qualifierId": "3",
+    "text": "Data3",
+    "parameter": [
+      {
+        "uom": null,
+        "value": "52",
+        "altUom": null,
+        "altValue": null
+      }
+    ]
+  }
+]
+```
+
+You can insert this into a temp table and test the query. Let me know if you need any further assistance!
+
 This query uses a subquery to aggregate the "parameter" array, and then uses the result in the outer query to construct the XML. The subquery uses `UNNEST` to expand the "parameter" array, and then uses `STRING_AGG` to concatenate the "param" elements.
