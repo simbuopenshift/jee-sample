@@ -1,0 +1,41 @@
+Here's an example of a SELECT query that retrieves data from a BigQuery table and converts it to XML:
+
+```
+SELECT 
+  xmlelement(
+    name "Qual",
+    xmlattributes(
+      qualifierId as "id"
+    ),
+    xmlelement(
+      name "text",
+      text
+    ),
+    xmlagg(
+      xmlelement(
+        name "param",
+        xmlattributes(
+          value as "value",
+          uom as "uom",
+          altValue as "altValue",
+          altUom as "altUom"
+        )
+      )
+    )
+  )
+FROM 
+  `project-id.dataset-id.table-name`
+WHERE 
+  qualifierId = 1;
+```
+
+This query:
+
+- Retrieves data from the specified BigQuery table.
+- Uses the `xmlelement` and `xmlattributes` functions to create XML elements and attributes.
+- Uses the `xmlagg` function to aggregate multiple "param" elements.
+- Filters data where `qualifierId` equals 1.
+
+Replace `project-id`, `dataset-id`, and `table-name` with your actual project, dataset, and table names.
+
+Note: This query assumes a specific structure for your data. Adjust the query according to your actual data schema.
