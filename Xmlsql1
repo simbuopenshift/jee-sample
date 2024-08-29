@@ -1,4 +1,4 @@
-Here's an alternative query that uses `STRING_AGG` instead of `GROUP_CONCAT`, which is supported in BigQuery:
+In that case, you can use a subquery to first aggregate the "parameter" array, and then use the result in the outer query to construct the XML. Here's an updated query:
 
 ```
 SELECT 
@@ -9,18 +9,15 @@ SELECT
         STRING_AGG(
           CONCAT(
             '<Qual id="', JSON_EXTRACT_SCALAR(input, '$.qualifierId'), '">',
-            IF(JSON_EXTRACT(input, '$.parameter') IS NOT NULL,
-              STRING_AGG(
-                CONCAT(
-                  '<param',
-                  IFNULL(CONCAT(' value="', JSON_EXTRACT_SCALAR(input, '$.parameter[*].value'), '"'), ''),
-                  IFNULL(CONCAT(' uom="', JSON_EXTRACT_SCALAR(input, '$.parameter[*].uom'), '"'), ''),
-                  IFNULL(CONCAT(' altValue="', JSON_EXTRACT_SCALAR(input, '$.parameter[*].altValue'), '"'), ''),
-                  IFNULL(CONCAT(' altUom="', JSON_EXTRACT_SCALAR(input, '$.parameter[*].altUom'), '"'), ''),
-                  '/>'
-                ),
-                ''
-              ),
+            IFNULL(
+              (SELECT STRING_AGG(CONCAT(
+                '<param',
+                IFNULL(CONCAT(' value="', JSON_EXTRACT_SCALAR(param, '$.value'), '"'), ''),
+                IFNULL(CONCAT(' uom="', JSON_EXTRACT_SCALAR(param, '$.uom'), '"'), ''),
+                IFNULL(CONCAT(' altValue="', JSON_EXTRACT_SCALAR(param, '$.altValue'), '"'), ''),
+                IFNULL(CONCAT(' altUom="', JSON_EXTRACT_SCALAR(param, '$.altUom'), '"'), ''),
+                '/>'
+              )) FROM UNNEST(JSON_EXTRACT_ARRAY(input, '$.parameter')) param),
               ''),
             '<text>', JSON_EXTRACT_SCALAR(input, '$.text'), '</text>',
             '</Qual>'
@@ -35,4 +32,4 @@ FROM
   table;
 ```
 
-This query uses `STRING_AGG` to concatenate the XML elements, and `IFNULL` to avoid including null values in the XML attributes. Note that I've also replaced the inner `GROUP_CONCAT` with `STRING_AGG`.
+This query uses a subquery to aggregate the "parameter" array, and then uses the result in the outer query to construct the XML. The subquery uses `UNNEST` to expand the "parameter" array, and then uses `STRING_AGG` to concatenate the "param" elements.
