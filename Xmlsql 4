@@ -1,0 +1,68 @@
+Here's a sample JSON string:
+
+```
+[
+  {
+    "qualifierId": "1",
+    "text": "Data1",
+    "parameter": [
+      {
+        "uom": "in",
+        "value": "32",
+        "altUom": "in",
+        "altValue": "xy"
+      },
+      {
+        "uom": "in",
+        "value": "32",
+        "altUom": "in",
+        "altValue": "xy"
+      }
+    ]
+  },
+  {
+    "qualifierId": "2",
+    "text": "Data2",
+    "parameter": null
+  },
+  {
+    "qualifierId": "3",
+    "text": "Data3",
+    "parameter": [
+      {
+        "uom": null,
+        "value": "52",
+        "altUom": null,
+        "altValue": null
+      }
+    ]
+  }
+]
+```
+
+And here's a sample SELECT query to convert this JSON string to a BigQuery table:
+
+```
+SELECT
+  JSON_EXTRACT_SCALAR(json_string, '$.qualifierId') AS qualifierId,
+  JSON_EXTRACT_SCALAR(json_string, '$.text') AS text,
+  JSON_EXTRACT_ARRAY(json_string, '$.parameter') AS parameter
+FROM
+  (SELECT '{"qualifierId": "1", "text": "Data1", "parameter": [{"uom": "in", "value": "32", "altUom": "in", "altValue": "xy"},{"uom": "in", "value": "32", "altUom": "in", "altValue": "xy"}]}' AS json_string)
+UNION ALL
+SELECT
+  JSON_EXTRACT_SCALAR(json_string, '$.qualifierId') AS qualifierId,
+  JSON_EXTRACT_SCALAR(json_string, '$.text') AS text,
+  JSON_EXTRACT_ARRAY(json_string, '$.parameter') AS parameter
+FROM
+  (SELECT '{"qualifierId": "2", "text": "Data2", "parameter": null}' AS json_string)
+UNION ALL
+SELECT
+  JSON_EXTRACT_SCALAR(json_string, '$.qualifierId') AS qualifierId,
+  JSON_EXTRACT_SCALAR(json_string, '$.text') AS text,
+  JSON_EXTRACT_ARRAY(json_string, '$.parameter') AS parameter
+FROM
+  (SELECT '{"qualifierId": "3", "text": "Data3", "parameter": [{"uom": null, "value": "52", "altUom": null, "altValue": null}]}' AS json_string)
+```
+
+This query uses `JSON_EXTRACT_SCALAR` to extract scalar values and `JSON_EXTRACT_ARRAY` to extract array values from the JSON string. The `UNION ALL` operator is used to combine the results from multiple rows into a single table.
