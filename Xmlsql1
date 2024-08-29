@@ -1,35 +1,40 @@
-The issue might be due to the fact that `xmlelement` and `xmlattributes` are not standard SQL functions. They are specific to certain databases like Oracle or PostgreSQL.
-
-If you're using BigQuery, you can use the `XML` function to generate XML elements. Here's an updated query:
+Here's the modified SQL query that converts the JSON input to the desired XML format:
 
 ```
 SELECT 
-  XML(
-    CONCAT(
-      '<Qual id="', JSON_EXTRACT_SCALAR(input, '$.qualifierId'), '">',
-      '<text>', JSON_EXTRACT_SCALAR(input, '$.text'), '</text>',
-      '<parameter>',
-      ARRAY_TO_STRING(
-        ARRAY(
-          SELECT 
-            CONCAT(
-              '<param value="', p.value, '" uom="', p.uom, '" altValue="', p.altValue, '" altUom="', p.altUom, '"/>'
+  CONCAT(
+    '<headers>',
+    CASE 
+      WHEN data IS NOT NULL THEN 
+        XMLAGG(
+          xmlelement(
+            name "Qual",
+            xmlattributes(
+              JSON_EXTRACT_SCALAR(input, '$.qualifierId') as "id"
+            ),
+            xmlelement(
+              name "text",
+              JSON_EXTRACT_SCALAR(input, '$.text')
+            ),
+            xmlagg(
+              xmlelement(
+                name "param",
+                xmlattributes(
+                  IFNULL(JSON_EXTRACT_SCALAR(input, '$.parameter[*].value'), '') AS "value",
+                  IFNULL(JSON_EXTRACT_SCALAR(input, '$.parameter[*].uom'), '') AS "uom",
+                  IFNULL(JSON_EXTRACT_SCALAR(input, '$.parameter[*].altValue'), '') AS "altValue",
+                  IFNULL(JSON_EXTRACT_SCALAR(input, '$.parameter[*].altUom'), '') AS "altUom"
+                )
+              )
             )
-          FROM 
-            UNNEST(JSON_EXTRACT_ARRAY(input, '$.parameter')) p
-        ),
-        ''
-      ),
-      '</parameter>',
-      '</Qual>'
-    )
-  )
+          )
+        )
+      ELSE ' ' 
+    END,
+    '</headers>'
+  ) AS detail
 FROM 
-  `project-id.dataset-id.table-name`
-WHERE 
-  JSON_EXTRACT_SCALAR(input, '$.qualifierId') = '1';
+  table;
 ```
 
-This query uses the `XML` function to generate the XML element, and `CONCAT` to concatenate the strings. It also uses `UNNEST` and `JSON_EXTRACT_ARRAY` to extract the `parameter` array from the JSON string.
-
-Replace `project-id`, `dataset-id`, and `table-name` with your actual project, dataset, and table names. Adjust the query according to your actual data schema.
+This query uses the `XMLAGG` function to aggregate the XML elements, and `IFNULL` to avoid including null values in the XML attributes.
