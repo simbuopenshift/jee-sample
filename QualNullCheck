@@ -1,0 +1,70 @@
+Here's the updated Java code that handles null values for all keys:
+
+```
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class JsonToXmlConverter {
+    public static String convertJsonToXml(String jsonString) {
+        StringBuilder xmlBuilder = new StringBuilder();
+        if (jsonString.startsWith("[")) {
+            JSONArray jsonArray = new JSONArray(jsonString);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                xmlBuilder.append("<Qual id=\"").append(getJsonValue(jsonObject, "qualifierId", "")).append("\">");
+                if (jsonObject.has("parameter") && jsonObject.get("parameter") != null) {
+                    if (jsonObject.get("parameter") instanceof JSONArray) {
+                        JSONArray parameters = jsonObject.getJSONArray("parameter");
+                        for (int j = 0; j < parameters.length(); j++) {
+                            JSONObject parameter = parameters.getJSONObject(j);
+                            xmlBuilder.append("<param");
+                            xmlBuilder.append(" value=\"").append(getJsonValue(parameter, "value", "")).append("\"");
+                            xmlBuilder.append(" uom=\"").append(getJsonValue(parameter, "uom", "")).append("\"");
+                            xmlBuilder.append(" altValue=\"").append(getJsonValue(parameter, "altValue", "")).append("\"");
+                            xmlBuilder.append(" altUom=\"").append(getJsonValue(parameter, "altUom", "")).append("\"");
+                            xmlBuilder.append(" />");
+                        }
+                    }
+                }
+                xmlBuilder.append("<text>").append(getJsonValue(jsonObject, "text", "")).append("</text>");
+                xmlBuilder.append("</Qual>");
+            }
+        } else {
+            JSONObject jsonObject = new JSONObject(jsonString);
+            xmlBuilder.append("<Qual id=\"").append(getJsonValue(jsonObject, "qualifierId", "")).append("\">");
+            if (jsonObject.has("parameter") && jsonObject.get("parameter") != null) {
+                if (jsonObject.get("parameter") instanceof JSONArray) {
+                    JSONArray parameters = jsonObject.getJSONArray("parameter");
+                    for (int j = 0; j < parameters.length(); j++) {
+                        JSONObject parameter = parameters.getJSONObject(j);
+                        xmlBuilder.append("<param");
+                        xmlBuilder.append(" value=\"").append(getJsonValue(parameter, "value", "")).append("\"");
+                        xmlBuilder.append(" uom=\"").append(getJsonValue(parameter, "uom", "")).append("\"");
+                        xmlBuilder.append(" altValue=\"").append(getJsonValue(parameter, "altValue", "")).append("\"");
+                        xmlBuilder.append(" altUom=\"").append(getJsonValue(parameter, "altUom", "")).append("\"");
+                        xmlBuilder.append(" />");
+                    }
+                }
+            }
+            xmlBuilder.append("<text>").append(getJsonValue(jsonObject, "text", "")).append("</text>");
+            xmlBuilder.append("</Qual>");
+        }
+        return xmlBuilder.toString();
+    }
+
+    private static String getJsonValue(JSONObject jsonObject, String key, String defaultValue) {
+        return jsonObject.has(key) && !jsonObject.isNull(key) ? jsonObject.getString(key) : defaultValue;
+    }
+
+    public static void main(String[] args) {
+        String jsonString = "[{\"text\": \" Data1\", \"parameter\":[{\"uom\": \"in\", \"value\":\" 32\", \"altUom\":\" in\", \"altValue\":\"xy\"}], \"qualifierId\":1}, {\"text\": \" Data2\", \"parameter\": null, \"qualifierId\":2},{\"text\": \" Data3\", \"parameter\":[{\"uom\": null, \"value\":\" 52\", \"altUom\": null, \"altValue\":null}], \"qualifierId\":3}]";
+        String xmlString = convertJsonToXml(jsonString);
+        System.out.println(xmlString);
+    }
+}
+```
+
+In this updated code:
+
+- I added a new method `getJsonValue()` that checks if a key exists in the JSONObject and if its value is not null before returning the value. If the key doesn't exist or its value is null, it returns a default value.
+- I replaced all direct calls to `getString()` with calls to `getJsonValue()` to handle null values.
