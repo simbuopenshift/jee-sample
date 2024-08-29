@@ -1,28 +1,27 @@
-Yes, you can use the provided syntax to convert JSON data to XML. However, since your input is a JSON string, you'll need to use the `JSON_EXTRACT` function to extract the values from the JSON string.
+The issue might be due to the fact that `xmlelement` and `xmlattributes` are not standard SQL functions. They are specific to certain databases like Oracle or PostgreSQL.
 
-Here's an updated query that combines the `xmlelement` syntax with `JSON_EXTRACT`:
+If you're using BigQuery, you can use the `XML` function to generate XML elements. Here's an updated query:
 
 ```
 SELECT 
-  xmlelement(
-    name "Qual",
-    xmlattributes(
-      JSON_EXTRACT_SCALAR(input, '$.qualifierId') as "id"
-    ),
-    xmlelement(
-      name "text",
-      JSON_EXTRACT_SCALAR(input, '$.text')
-    ),
-    xmlagg(
-      xmlelement(
-        name "param",
-        xmlattributes(
-          JSON_EXTRACT_SCALAR(input, '$.parameter[*].value') as "value",
-          JSON_EXTRACT_SCALAR(input, '$.parameter[*].uom') as "uom",
-          JSON_EXTRACT_SCALAR(input, '$.parameter[*].altValue') as "altValue",
-          JSON_EXTRACT_SCALAR(input, '$.parameter[*].altUom') as "altUom"
-        )
-      )
+  XML(
+    CONCAT(
+      '<Qual id="', JSON_EXTRACT_SCALAR(input, '$.qualifierId'), '">',
+      '<text>', JSON_EXTRACT_SCALAR(input, '$.text'), '</text>',
+      '<parameter>',
+      ARRAY_TO_STRING(
+        ARRAY(
+          SELECT 
+            CONCAT(
+              '<param value="', p.value, '" uom="', p.uom, '" altValue="', p.altValue, '" altUom="', p.altUom, '"/>'
+            )
+          FROM 
+            UNNEST(JSON_EXTRACT_ARRAY(input, '$.parameter')) p
+        ),
+        ''
+      ),
+      '</parameter>',
+      '</Qual>'
     )
   )
 FROM 
@@ -31,11 +30,6 @@ WHERE
   JSON_EXTRACT_SCALAR(input, '$.qualifierId') = '1';
 ```
 
-This query:
-
-- Uses `JSON_EXTRACT_SCALAR` to extract values from the JSON string.
-- Creates XML elements and attributes using `xmlelement` and `xmlattributes`.
-- Aggregates multiple "param" elements using `xmlagg`.
-- Filters data where `qualifierId` equals 1.
+This query uses the `XML` function to generate the XML element, and `CONCAT` to concatenate the strings. It also uses `UNNEST` and `JSON_EXTRACT_ARRAY` to extract the `parameter` array from the JSON string.
 
 Replace `project-id`, `dataset-id`, and `table-name` with your actual project, dataset, and table names. Adjust the query according to your actual data schema.
