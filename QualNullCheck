@@ -1,4 +1,4 @@
-Here's the updated Java code that handles null values for all keys:
+Here's the updated Java code that handles null values for all keys and correctly processes "qualifierId" as an integer:
 
 ```
 import org.json.JSONArray;
@@ -11,7 +11,7 @@ public class JsonToXmlConverter {
             JSONArray jsonArray = new JSONArray(jsonString);
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
-                xmlBuilder.append("<Qual id=\"").append(getJsonValue(jsonObject, "qualifierId", "")).append("\">");
+                xmlBuilder.append("<Qual id=\"").append(getJsonValue(jsonObject, "qualifierId", 0)).append("\">");
                 if (jsonObject.has("parameter") && jsonObject.get("parameter") != null) {
                     if (jsonObject.get("parameter") instanceof JSONArray) {
                         JSONArray parameters = jsonObject.getJSONArray("parameter");
@@ -31,7 +31,7 @@ public class JsonToXmlConverter {
             }
         } else {
             JSONObject jsonObject = new JSONObject(jsonString);
-            xmlBuilder.append("<Qual id=\"").append(getJsonValue(jsonObject, "qualifierId", "")).append("\">");
+            xmlBuilder.append("<Qual id=\"").append(getJsonValue(jsonObject, "qualifierId", 0)).append("\">");
             if (jsonObject.has("parameter") && jsonObject.get("parameter") != null) {
                 if (jsonObject.get("parameter") instanceof JSONArray) {
                     JSONArray parameters = jsonObject.getJSONArray("parameter");
@@ -56,6 +56,10 @@ public class JsonToXmlConverter {
         return jsonObject.has(key) && !jsonObject.isNull(key) ? jsonObject.getString(key) : defaultValue;
     }
 
+    private static int getJsonValue(JSONObject jsonObject, String key, int defaultValue) {
+        return jsonObject.has(key) && !jsonObject.isNull(key) ? jsonObject.getInt(key) : defaultValue;
+    }
+
     public static void main(String[] args) {
         String jsonString = "[{\"text\": \" Data1\", \"parameter\":[{\"uom\": \"in\", \"value\":\" 32\", \"altUom\":\" in\", \"altValue\":\"xy\"}], \"qualifierId\":1}, {\"text\": \" Data2\", \"parameter\": null, \"qualifierId\":2},{\"text\": \" Data3\", \"parameter\":[{\"uom\": null, \"value\":\" 52\", \"altUom\": null, \"altValue\":null}], \"qualifierId\":3}]";
         String xmlString = convertJsonToXml(jsonString);
@@ -66,5 +70,5 @@ public class JsonToXmlConverter {
 
 In this updated code:
 
-- I added a new method `getJsonValue()` that checks if a key exists in the JSONObject and if its value is not null before returning the value. If the key doesn't exist or its value is null, it returns a default value.
-- I replaced all direct calls to `getString()` with calls to `getJsonValue()` to handle null values.
+- I added a new overload of the `getJsonValue()` method that returns an integer value for "qualifierId".
+- I replaced the calls to `getJsonValue()` for "qualifierId" with the new overload to correctly process it as an integer.
