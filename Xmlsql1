@@ -1,41 +1,29 @@
-Yes, you can use the provided syntax to convert JSON data to XML. However, since your input is a JSON string, you'll need to use the `JSON_EXTRACT` function to extract the values from the JSON string.
-
-Here's an updated query that combines the `xmlelement` syntax with `JSON_EXTRACT`:
+Here's the corrected SQL query for a JSON string input:
 
 ```
 SELECT 
-  xmlelement(
-    name "Qual",
-    xmlattributes(
-      JSON_EXTRACT_SCALAR(input, '$.qualifierId') as "id"
-    ),
-    xmlelement(
-      name "text",
-      JSON_EXTRACT_SCALAR(input, '$.text')
-    ),
-    xmlagg(
-      xmlelement(
-        name "param",
-        xmlattributes(
-          JSON_EXTRACT_SCALAR(input, '$.parameter[*].value') as "value",
-          JSON_EXTRACT_SCALAR(input, '$.parameter[*].uom') as "uom",
-          JSON_EXTRACT_SCALAR(input, '$.parameter[*].altValue') as "altValue",
-          JSON_EXTRACT_SCALAR(input, '$.parameter[*].altUom') as "altUom"
-        )
+  CASE 
+    WHEN company IS NOT NULL THEN 
+      CONCAT(
+        '<Qual id="', qualifierId, '">',
+        '<text>', text, '</text>',
+        '<parameter>',
+        REPLACE(REPLACE(REPLACE(JSON_EXTRACT(input, '$.parameter[*]'), '[', ''), ']', ''), '"', ''),
+        '</parameter>',
+        '</Qual>'
       )
-    )
-  )
+    ELSE ' ' 
+  END AS xml_output
 FROM 
-  `project-id.dataset-id.table-name`
-WHERE 
-  JSON_EXTRACT_SCALAR(input, '$.qualifierId') = '1';
+  view;
 ```
 
 This query:
 
-- Uses `JSON_EXTRACT_SCALAR` to extract values from the JSON string.
-- Creates XML elements and attributes using `xmlelement` and `xmlattributes`.
-- Aggregates multiple "param" elements using `xmlagg`.
-- Filters data where `qualifierId` equals 1.
+- Uses a CASE statement to check if the `company` column is not null.
+- If `company` is not null, it concatenates the XML elements using the `CONCAT` function.
+- Uses `JSON_EXTRACT` to extract the `parameter` array from the JSON string.
+- Replaces `[`, `]`, and `"` characters from the extracted JSON string to format it as XML.
+- If `company` is null, it returns an empty string.
 
-Replace `project-id`, `dataset-id`, and `table-name` with your actual project, dataset, and table names. Adjust the query according to your actual data schema.
+Note: Replace `view` with your actual view name.
