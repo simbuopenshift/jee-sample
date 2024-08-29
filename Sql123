@@ -1,37 +1,59 @@
-Here's a sample SELECT query to convert the JSON data in your table to XML:
+The provided SQL query is mostly correct, but there's a small issue with the `CASE` statement. The `CASE` statement is missing the `WHEN` condition. Here's the corrected query:
 
 ```
-SELECT
+SELECT 
   CONCAT(
     '<headers>',
-    STRING_AGG(
-      CONCAT(
-        '<Qual id="', JSON_EXTRACT_SCALAR(json_string, '$.qualifierId'), '">',
-        IFNULL(
-          STRING_AGG(
-            CONCAT(
-              '<param',
-              IFNULL(CONCAT(' value="', JSON_EXTRACT_SCALAR(param, '$.value'), '"'), ''),
-              IFNULL(CONCAT(' uom="', JSON_EXTRACT_SCALAR(param, '$.uom'), '"'), ''),
-              IFNULL(CONCAT(' altValue="', JSON_EXTRACT_SCALAR(param, '$.altValue'), '"'), ''),
-              IFNULL(CONCAT(' altUom="', JSON_EXTRACT_SCALAR(param, '$.altUom'), '"'), ''),
-              '/>'
+    CASE 
+      WHEN data IS NOT NULL THEN 
+        STRING_AGG(
+          CONCAT(
+            '<Qual id="', JSON_EXTRACT_SCALAR(input, '$.qualifierId'), '">',
+            IFNULL(
+              (
+                SELECT 
+                  STRING_AGG(
+                    CONCAT(
+                      '<param',
+                      IFNULL(CONCAT(' value="', JSON_EXTRACT_SCALAR(param, '$.value'), '"'), ''),
+                      IFNULL(CONCAT(' uom="', JSON_EXTRACT_SCALAR(param, '$.uom'), '"'), ''),
+                      IFNULL(CONCAT(' altValue="', JSON_EXTRACT_SCALAR(param, '$.altValue'), '"'), ''),
+                      IFNULL(CONCAT(' altUom="', JSON_EXTRACT_SCALAR(param, '$.altUom'), '"'), ''),
+                      '/>'
+                    )
+                  )
+                FROM 
+                  UNNEST(JSON_EXTRACT_ARRAY(input, '$.parameter')) param
+              ),
+              ''
             ),
-            ''
+            '<text>', JSON_EXTRACT_SCALAR(input, '$.text'), '</text>',
+            '</Qual>'
           ),
           ''
-        ),
-        '<text>', JSON_EXTRACT_SCALAR(json_string, '$.text'), '</text>',
-        '</Qual>'
-      ),
-      ''
-    ),
+        )
+      ELSE ' ' 
+    END,
     '</headers>'
-  ) AS xml
-FROM
-  your_table
+  ) AS detail
+FROM 
+  table;
 ```
 
-Replace `your_table` with your actual table name.
+As for the valid input, here's an example:
 
-This query uses `STRING_AGG` to concatenate the XML elements, and `IFNULL` to avoid including null values in the XML attributes. The `JSON_EXTRACT_SCALAR` function is used to extract scalar values from the JSON string, and `JSON_EXTRACT_ARRAY` is used to extract array values.
+```
+WITH table AS (
+  SELECT 
+    '{"qualifierId": "1", "text": "Data1", "parameter": [{"uom": "in", "value": "32", "altUom": "in", "altValue": "xy"},{"uom": "in", "value": "32", "altUom": "in", "altValue": "xy"}]}' AS input,
+    '{"qualifierId": "2", "text": "Data2", "parameter": null}' AS data
+  UNION ALL
+  SELECT 
+    '{"qualifierId": "3", "text": "Data3", "parameter": [{"uom": null, "value": "52", "altUom": null, "altValue": null}]}' AS input,
+    NULL AS data
+)
+SELECT 
+  ...
+```
+
+This example uses a `WITH` clause to define a temporary table with sample data. The `input` column contains the JSON data, and the `data` column is used to simulate the `CASE` statement condition.
