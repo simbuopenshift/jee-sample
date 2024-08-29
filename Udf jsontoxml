@@ -1,0 +1,50 @@
+Here is the complete BigQuery code to achieve this:
+
+```
+CREATE TEMP FUNCTION JsonToXml(json_string STRING)
+RETURNS STRING
+LANGUAGE java
+OPTIONS (
+  library='gs://path/to/your/jar/file.jar',
+  main_class='com.example.JsonToXml'
+)
+AS (
+  // Call your Java method here
+  com.example.JsonToXml.convert(json_string)
+);
+
+CREATE TEMP TABLE employee (
+  id INT64,
+  data STRING
+);
+
+INSERT INTO employee (id, data)
+VALUES
+  (1, '{"name": "John", "age": 30, "address": {"street": "123 Main St", "city": "Anytown", "state": "CA", "zip": "12345"}}'),
+  (2, '{"name": "Jane", "age": 25, "address": {"street": "456 Elm St", "city": "Othertown", "state": "NY", "zip": "67890"}}');
+
+SELECT
+  id,
+  JsonToXml(data) AS xml_data
+FROM
+  employee;
+```
+
+And here is the Java code for the `JsonToXml` class:
+
+```
+public class JsonToXml {
+  public static String convert(String json) {
+    try {
+      JSONObject jsonObject = new JSONObject(json);
+      return jsonObject.toString(4); // 4 is the indent factor
+    } catch (JSONException e) {
+      return "Error converting JSON to XML: " + e.getMessage();
+    }
+  }
+}
+```
+
+Note that you need to replace `'gs://path/to/your/jar/file.jar'` with the actual path to your JAR file containing the `JsonToXml` class.
+
+Also, this code assumes that the JSON data in the `data` column is a simple JSON object. If your JSON data is more complex (e.g., contains arrays or nested objects), you may need to modify the `JsonToXml` class accordingly.
