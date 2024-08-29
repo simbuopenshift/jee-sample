@@ -1,0 +1,29 @@
+Here's the corrected SQL query for a JSON string input:
+
+```
+SELECT 
+  CASE 
+    WHEN company IS NOT NULL THEN 
+      CONCAT(
+        '<Qual id="', qualifierId, '">',
+        '<text>', text, '</text>',
+        '<parameter>',
+        REPLACE(REPLACE(REPLACE(JSON_EXTRACT(input, '$.parameter[*]'), '[', ''), ']', ''), '"', ''),
+        '</parameter>',
+        '</Qual>'
+      )
+    ELSE ' ' 
+  END AS xml_output
+FROM 
+  view;
+```
+
+This query:
+
+- Uses a CASE statement to check if the `company` column is not null.
+- If `company` is not null, it concatenates the XML elements using the `CONCAT` function.
+- Uses `JSON_EXTRACT` to extract the `parameter` array from the JSON string.
+- Replaces `[`, `]`, and `"` characters from the extracted JSON string to format it as XML.
+- If `company` is null, it returns an empty string.
+
+Note: Replace `view` with your actual view name.
