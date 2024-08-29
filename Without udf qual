@@ -1,0 +1,51 @@
+Here is the modified BigQuery code to transform the JSON data into XML format:
+
+```
+WITH employee AS (
+  SELECT
+    '[{"text": "Data1", "parameter":[{"uom": "in", "value":"3text2", "altUom":"in", "altValue":"xy"},{"uom": "in", "value":"32", "altUom":"in", "altValue":"xy"}], "qualifierId":"1"}, {"text": "Data2", "parameter": null, "qualifierId":"2"},{"text": "Data3", "parameter":[{"uom": null, "value":"52", "altUom": null, "altValue":null}], "qualifierId":"3"}]' AS data
+)
+
+SELECT
+  CONCAT(
+    '<root>',
+    STRING_AGG(
+      CONCAT(
+        '<employee>',
+        '<qualifierId>', JSON_EXTRACT_SCALAR(e, '$.qualifierId'), '</qualifierId>',
+        '<text>', JSON_EXTRACT_SCALAR(e, '$.text'), '</text>',
+        IF(
+          JSON_EXTRACT_ARRAY(e, '$.parameter') IS NOT NULL,
+          CONCAT(
+            '<parameter>',
+            STRING_AGG(
+              CONCAT(
+                '<param>',
+                '<uom>', IFNULL(JSON_EXTRACT_SCALAR(p, '$.uom'), ''), '</uom>',
+                '<value>', JSON_EXTRACT_SCALAR(p, '$.value'), '</value>',
+                '<altUom>', IFNULL(JSON_EXTRACT_SCALAR(p, '$.altUom'), ''), '</altUom>',
+                '<altValue>', IFNULL(JSON_EXTRACT_SCALAR(p, '$.altValue'), ''), '</altValue>',
+                '</param>'
+              ),
+              ''
+            ),
+            '</parameter>'
+          ),
+          ''
+        ),
+        '</employee>'
+      ),
+      ''
+    ),
+    '</root>'
+  ) AS xml_data
+FROM
+  employee,
+  UNNEST(JSON_EXTRACT_ARRAY(data, '$')) AS e
+LEFT JOIN
+  UNNEST(JSON_EXTRACT_ARRAY(e, '$.parameter')) AS p
+ON
+  TRUE
+```
+
+This code uses a combination of `JSON_EXTRACT_SCALAR`, `JSON_EXTRACT_ARRAY`, and `STRING_AGG` functions to transform the JSON data into XML format. The `IF` statement is used to handle null values in the `parameter` array.
