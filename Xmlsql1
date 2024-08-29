@@ -1,6 +1,4 @@
-The error message indicates that there's a syntax error in the query. The `xmlelement` and `xmlattributes` functions are not standard SQL functions, and might not be supported in your database.
-
-Here's an alternative query that uses string concatenation to create the XML:
+Here's an alternative query that uses `STRING_AGG` instead of `GROUP_CONCAT`, which is supported in BigQuery:
 
 ```
 SELECT 
@@ -8,11 +6,11 @@ SELECT
     '<headers>',
     CASE 
       WHEN data IS NOT NULL THEN 
-        GROUP_CONCAT(
+        STRING_AGG(
           CONCAT(
             '<Qual id="', JSON_EXTRACT_SCALAR(input, '$.qualifierId'), '">',
             IF(JSON_EXTRACT(input, '$.parameter') IS NOT NULL,
-              GROUP_CONCAT(
+              STRING_AGG(
                 CONCAT(
                   '<param',
                   IFNULL(CONCAT(' value="', JSON_EXTRACT_SCALAR(input, '$.parameter[*].value'), '"'), ''),
@@ -20,12 +18,14 @@ SELECT
                   IFNULL(CONCAT(' altValue="', JSON_EXTRACT_SCALAR(input, '$.parameter[*].altValue'), '"'), ''),
                   IFNULL(CONCAT(' altUom="', JSON_EXTRACT_SCALAR(input, '$.parameter[*].altUom'), '"'), ''),
                   '/>'
-                )
+                ),
+                ''
               ),
               ''),
             '<text>', JSON_EXTRACT_SCALAR(input, '$.text'), '</text>',
             '</Qual>'
-          )
+          ),
+          ''
         )
       ELSE ' ' 
     END,
@@ -35,4 +35,4 @@ FROM
   table;
 ```
 
-This query uses `GROUP_CONCAT` to concatenate the XML elements, and `IFNULL` to avoid including null values in the XML attributes.
+This query uses `STRING_AGG` to concatenate the XML elements, and `IFNULL` to avoid including null values in the XML attributes. Note that I've also replaced the inner `GROUP_CONCAT` with `STRING_AGG`.
