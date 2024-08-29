@@ -1,0 +1,37 @@
+Here is the complete BigQuery code to achieve this without using a User-Defined Function (UDF):
+
+```
+WITH employee AS (
+  SELECT
+    '{"name": "John", "age": 30, "address": {"street": "123 Main St", "city": "Anytown", "state": "CA", "zip": "12345"}}' AS data
+  UNION ALL
+  SELECT
+    '{"name": "Jane", "age": 25, "address": {"street": "456 Elm St", "city": "Othertown", "state": "NY", "zip": "67890"}}'
+)
+
+SELECT
+  REGEXP_REPLACE(
+    REGEXP_REPLACE(
+      REGEXP_REPLACE(
+        REGEXP_REPLACE(
+          JSON_EXTRACT_SCALAR(data, '$'), 
+          r'"([^"]+)"\s*:\s*', '<\\1>' 
+        ), 
+        r'"{', '<' 
+      ), 
+      r'"}', '>' 
+    ), 
+    r',\s*', '' 
+  ) AS xml_data
+FROM
+  employee;
+```
+
+This code uses a combination of `REGEXP_REPLACE` functions to transform the JSON data into XML format. The regular expressions used are:
+
+- `r'"([^"]+)"\s*:\s*'` matches key-value pairs in JSON and replaces them with `<key>` format.
+- `r'"{'` matches the opening double quote of a JSON value and replaces it with `<`.
+- `r'"}'` matches the closing double quote of a JSON value and replaces it with `>`.
+- `r',\s*'` matches commas and replaces them with an empty string to remove them from the output.
+
+Note that this code assumes that the JSON data in the `data` column is a simple JSON object. If your JSON data is more complex (e.g., contains arrays or nested objects), you may need to modify the regular expressions accordingly.
