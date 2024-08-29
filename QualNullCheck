@@ -1,5 +1,4 @@
-[29/08, 1:32 pm] Silambu🐴🐴🦄: Small update qualifierId is a string
-[29/08, 1:33 pm] Meta AI: No problem, I've updated the code to reflect that "qualifierId" is an integer. Here's the updated Java code:
+Here's the updated Java code that handles null values for the "parameter" key:
 
 ```
 import org.json.JSONArray;
@@ -12,7 +11,7 @@ public class JsonToXmlConverter {
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
             xmlBuilder.append("<Qual id=\"").append(getJsonValue(jsonObject, "qualifierId", 0)).append("\">");
-            if (jsonObject.has("parameter") && jsonObject.get("parameter") != null) {
+            if (jsonObject.has("parameter") && jsonObject.get("parameter") != null && !jsonObject.isNull("parameter")) {
                 JSONArray parameters = jsonObject.getJSONArray("parameter");
                 for (int j = 0; j < parameters.length(); j++) {
                     JSONObject parameter = parameters.getJSONObject(j);
@@ -48,6 +47,5 @@ public class JsonToXmlConverter {
 
 In this updated code:
 
-- I updated the "qualifierId" to be handled as an integer.
-- I added a new overload of the `getJsonValue()` method to handle integer values.
-- I updated the calls to `getJsonValue()` for "qualifierId" to use the new overload.
+- I added a null check for the "parameter" key before trying to access it as a JSONArray.
+- If "parameter" is null, the code will skip the inner loop and continue with the rest of the XML conversion.
