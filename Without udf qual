@@ -1,38 +1,48 @@
-Here is the modified BigQuery code to transform the JSON data into XML format:
+That error message usually occurs when you're trying to use an aggregate function (like `STRING_AGG`) inside another aggregate function.
+
+To fix this, you can use a subquery to first aggregate the `parameter` array, and then use the result in the outer query to aggregate the final XML string.
+
+Here's an updated version of the code:
 
 ```
 WITH employee AS (
   SELECT
     '[{"text": "Data1", "parameter":[{"uom": "in", "value":"3text2", "altUom":"in", "altValue":"xy"},{"uom": "in", "value":"32", "altUom":"in", "altValue":"xy"}], "qualifierId":"1"}, {"text": "Data2", "parameter": null, "qualifierId":"2"},{"text": "Data3", "parameter":[{"uom": null, "value":"52", "altUom": null, "altValue":null}], "qualifierId":"3"}]' AS data
+),
+aggregated_parameter AS (
+  SELECT
+    JSON_EXTRACT_SCALAR(e, '$.qualifierId') AS qualifierId,
+    JSON_EXTRACT_SCALAR(e, '$.text') AS text,
+    STRING_AGG(
+      CONCAT(
+        '<param>',
+        '<uom>', IFNULL(JSON_EXTRACT_SCALAR(p, '$.uom'), ''), '</uom>',
+        '<value>', JSON_EXTRACT_SCALAR(p, '$.value'), '</value>',
+        '<altUom>', IFNULL(JSON_EXTRACT_SCALAR(p, '$.altUom'), ''), '</altUom>',
+        '<altValue>', IFNULL(JSON_EXTRACT_SCALAR(p, '$.altValue'), ''), '</altValue>',
+        '</param>'
+      ),
+      ''
+    ) AS parameter
+  FROM
+    employee,
+    UNNEST(JSON_EXTRACT_ARRAY(data, '$')) AS e
+  LEFT JOIN
+    UNNEST(JSON_EXTRACT_ARRAY(e, '$.parameter')) AS p
+  ON
+    TRUE
+  GROUP BY
+    qualifierId, text
 )
-
 SELECT
   CONCAT(
     '<root>',
     STRING_AGG(
       CONCAT(
         '<employee>',
-        '<qualifierId>', JSON_EXTRACT_SCALAR(e, '$.qualifierId'), '</qualifierId>',
-        '<text>', JSON_EXTRACT_SCALAR(e, '$.text'), '</text>',
-        IF(
-          JSON_EXTRACT_ARRAY(e, '$.parameter') IS NOT NULL,
-          CONCAT(
-            '<parameter>',
-            STRING_AGG(
-              CONCAT(
-                '<param>',
-                '<uom>', IFNULL(JSON_EXTRACT_SCALAR(p, '$.uom'), ''), '</uom>',
-                '<value>', JSON_EXTRACT_SCALAR(p, '$.value'), '</value>',
-                '<altUom>', IFNULL(JSON_EXTRACT_SCALAR(p, '$.altUom'), ''), '</altUom>',
-                '<altValue>', IFNULL(JSON_EXTRACT_SCALAR(p, '$.altValue'), ''), '</altValue>',
-                '</param>'
-              ),
-              ''
-            ),
-            '</parameter>'
-          ),
-          ''
-        ),
+        '<qualifierId>', qualifierId, '</qualifierId>',
+        '<text>', text, '</text>',
+        IF(parameter IS NOT NULL, CONCAT('<parameter>', parameter, '</parameter>'), ''),
         '</employee>'
       ),
       ''
@@ -40,12 +50,7 @@ SELECT
     '</root>'
   ) AS xml_data
 FROM
-  employee,
-  UNNEST(JSON_EXTRACT_ARRAY(data, '$')) AS e
-LEFT JOIN
-  UNNEST(JSON_EXTRACT_ARRAY(e, '$.parameter')) AS p
-ON
-  TRUE
+  aggregated_parameter
 ```
 
-This code uses a combination of `JSON_EXTRACT_SCALAR`, `JSON_EXTRACT_ARRAY`, and `STRING_AGG` functions to transform the JSON data into XML format. The `IF` statement is used to handle null values in the `parameter` array.
+This code first aggregates the `parameter` array in the `aggregated_parameter` subquery, and then uses the result in the outer query to aggregate the final XML string.
