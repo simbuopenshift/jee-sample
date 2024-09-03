@@ -1,0 +1,151 @@
+Sure! To use SQL Server with the generic JDBC code, you'll need to adjust the connection string and potentially a few data types to match SQL Server's standards. Below is the modified version of the generic code for executing a stored procedure using SQL Server:
+
+### Updated Java Code for SQL Server:
+
+```java
+import java.sql.*;
+
+public class StoredProcedureExecutorSQLServer {
+
+    // Update the connection details for SQL Server
+    private static final String DB_URL = "jdbc:sqlserver://localhost:1433;databaseName=your_database";
+    private static final String USER = "your_username";
+    private static final String PASSWORD = "your_password";
+
+    public static void main(String[] args) {
+        // Example usage with a stored procedure that takes two input parameters, one output, and a result set
+        executeStoredProcedure("{call get_employee_details(?, ?, ?)}");
+    }
+
+    public static void executeStoredProcedure(String storedProcCall) {
+        Connection connection = null;
+        CallableStatement callableStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            // Establish connection to the SQL Server database
+            connection = DriverManager.getConnection(DB_URL, USER, PASSWORD);
+
+            // Prepare the callable statement for the stored procedure
+            callableStatement = connection.prepareCall(storedProcCall);
+
+            // Set input parameters (example: index 1 and 2 are input params)
+            callableStatement.setInt(1, 1); // Example: employee ID
+            callableStatement.setString(2, "HR"); // Example: employee department
+
+            // Register output parameter (example: index 3 is an output param)
+            callableStatement.registerOutParameter(3, Types.VARCHAR);
+
+            // Execute the stored procedure
+            boolean hasResultSet = callableStatement.execute();
+
+            // Handle result sets if the procedure returns one
+            if (hasResultSet) {
+                resultSet = callableStatement.getResultSet();
+                while (resultSet.next()) {
+                    // Process result set (example: read column values)
+                    int empId = resultSet.getInt("emp_id");
+                    String empName = resultSet.getString("emp_name");
+                    double empSalary = resultSet.getDouble("emp_salary");
+                    String empDept = resultSet.getString("emp_dept");
+
+                    System.out.println("Employee ID: " + empId);
+                    System.out.println("Employee Name: " + empName);
+                    System.out.println("Employee Salary: " + empSalary);
+                    System.out.println("Employee Dept: " + empDept);
+                }
+            }
+
+            // Handle output parameters (example: index 3)
+            String outputValue = callableStatement.getString(3);
+            System.out.println("Output Parameter (emp_status): " + outputValue);
+
+            // If the procedure returns more result sets, loop through them
+            while (callableStatement.getMoreResults()) {
+                resultSet = callableStatement.getResultSet();
+                while (resultSet.next()) {
+                    // Process additional result sets if needed
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            // Clean up resources
+            try {
+                if (resultSet != null) resultSet.close();
+                if (callableStatement != null) callableStatement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+### Changes for SQL Server:
+
+1. **Connection String**: 
+   - The connection URL for SQL Server uses `jdbc:sqlserver://`.
+   - The format is `jdbc:sqlserver://<host>:<port>;databaseName=<database>`. 
+   - Default SQL Server port is `1433`.
+   - Make sure you have SQL Server drivers in your project (`sqljdbc4.jar` or `mssql-jdbc.jar`).
+
+2. **Driver**:
+   - The driver class for SQL Server is automatically detected from the JDBC URL, so you don’t need to manually load a driver with `Class.forName()`.
+
+3. **Data Types**:
+   - In SQL Server, the types you use for parameters (`setString`, `setInt`, etc.) remain the same.
+   - SQL Server `VARCHAR` is equivalent to `Types.VARCHAR`, and `INT` is equivalent to `Types.INTEGER`.
+
+### SQL Server Stored Procedure Example:
+
+Here's the same `get_employee_details` stored procedure designed for SQL Server:
+
+```sql
+CREATE PROCEDURE get_employee_details
+    @emp_id INT,               -- Input parameter
+    @emp_dept NVARCHAR(50),    -- Input parameter
+    @emp_status NVARCHAR(20) OUTPUT  -- Output parameter
+AS
+BEGIN
+    -- Set the output parameter based on the employee department
+    IF @emp_dept = 'HR'
+        SET @emp_status = 'Active';
+    ELSE
+        SET @emp_status = 'Inactive';
+
+    -- Return a result set with employee details
+    SELECT emp_id, emp_name, emp_salary, emp_dept
+    FROM employees
+    WHERE emp_id = @emp_id AND emp_dept = @emp_dept;
+END
+```
+
+### SQL Server Employee Table Example:
+
+Make sure your `employees` table is compatible with the stored procedure:
+
+```sql
+CREATE TABLE employees (
+    emp_id INT PRIMARY KEY,
+    emp_name NVARCHAR(100),
+    emp_salary DECIMAL(10, 2),
+    emp_dept NVARCHAR(50)
+);
+
+-- Insert some sample data
+INSERT INTO employees (emp_id, emp_name, emp_salary, emp_dept)
+VALUES (1, 'John Doe', 50000, 'HR'),
+       (2, 'Jane Smith', 60000, 'Finance'),
+       (3, 'Bob Johnson', 70000, 'HR');
+```
+
+### Explanation:
+
+- The stored procedure takes two input parameters: `emp_id` and `emp_dept`.
+- It returns an output parameter `emp_status` based on some logic (active if department is "HR").
+- It also returns a result set of employees that match the given `emp_id` and `emp_dept`.
+  
+This setup should work with the provided Java code for SQL Server.
