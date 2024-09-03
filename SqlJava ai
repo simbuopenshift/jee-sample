@@ -1,0 +1,97 @@
+import java.sql.*;
+
+public class StoredProcedureExecutor {
+
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/your_database";
+    private static final String USER = "your_username";
+    private static final String PASSWORD = "your_password";
+
+    public static void main(String[] args) {
+        // Example usage with a stored procedure that takes two input parameters, one output, and a result set
+        executeStoredProcedure("{call your_stored_procedure(?, ?, ?)}");
+    }
+
+    public static void executeStoredProcedure(String storedProcCall) {
+        Connection connection = null;
+        CallableStatement callableStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            // Establish connection to the database
+            connection = DriverManager.getConnection(DB_URL, USER, PASSWORD);
+
+            // Prepare the callable statement
+            callableStatement = connection.prepareCall(storedProcCall);
+
+            // Set input parameters if any (example: index 1 and 2 are input params)
+            callableStatement.setString(1, "inputParam1");
+            callableStatement.setInt(2, 123);
+
+            // Register output parameters if any (example: index 3 is an output param)
+            callableStatement.registerOutParameter(3, Types.VARCHAR);
+
+            // Execute the stored procedure
+            boolean hasResultSet = callableStatement.execute();
+
+            // Handle result sets if the procedure returns one
+            if (hasResultSet) {
+                resultSet = callableStatement.getResultSet();
+                while (resultSet.next()) {
+                    // Process result set (example: read column values)
+                    String columnValue = resultSet.getString("column_name");
+                    System.out.println("Column Value: " + columnValue);
+                }
+            }
+
+            // Handle output parameters (example: index 3)
+            String outputValue = callableStatement.getString(3);
+            System.out.println("Output Parameter: " + outputValue);
+
+            // If the procedure returns more result sets, loop through them
+            while (callableStatement.getMoreResults()) {
+                resultSet = callableStatement.getResultSet();
+                while (resultSet.next()) {
+                    // Process additional result sets
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            // Clean up resources
+            try {
+                if (resultSet != null) resultSet.close();
+                if (callableStatement != null) callableStatement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
+DELIMITER $$
+
+CREATE PROCEDURE `get_employee_details` (
+    IN emp_id INT,           -- Input parameter
+    IN emp_dept VARCHAR(50), -- Input parameter
+    OUT emp_status VARCHAR(20) -- Output parameter
+)
+BEGIN
+    -- Set the output parameter based on some logic (for example, based on emp_dept)
+    IF emp_dept = 'HR' THEN
+        SET emp_status = 'Active';
+    ELSE
+        SET emp_status = 'Inactive';
+    END IF;
+
+    -- Return a result set with employee details based on the input parameters
+    SELECT emp_id, emp_name, emp_salary, emp_dept 
+    FROM employees 
+    WHERE emp_id = emp_id AND emp_dept = emp_dept;
+
+END$$
+
+DELIMITER ;
+
+
