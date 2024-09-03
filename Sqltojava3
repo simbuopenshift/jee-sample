@@ -1,0 +1,289 @@
+Yes, you can create a more flexible and generic Java code to handle **any type** of stored procedure, regardless of the number of input/output parameters or result sets. The idea is to use dynamic handling of input and output parameters, as well as manage multiple result sets.
+
+### Generic Java Code for Any Stored Procedure:
+
+```java
+import java.sql.*;
+import java.util.*;
+
+public class GenericStoredProcedureExecutor {
+
+    // Update the connection details based on your database
+    private static final String DB_URL = "jdbc:sqlserver://localhost:1433;databaseName=your_database";
+    private static final String USER = "your_username";
+    private static final String PASSWORD = "your_password";
+
+    public static void main(String[] args) {
+        // Example usage
+        Map<Integer, Object> inputParams = new HashMap<>();
+        inputParams.put(1, 1);  // Example: emp_id
+        inputParams.put(2, "HR");  // Example: emp_dept
+
+        Map<Integer, Integer> outputParams = new HashMap<>();
+        outputParams.put(3, Types.VARCHAR);  // Example: emp_status
+
+        executeStoredProcedure("{call get_employee_details(?, ?, ?)}", inputParams, outputParams);
+    }
+
+    public static void executeStoredProcedure(String storedProcCall, Map<Integer, Object> inputParams, Map<Integer, Integer> outputParams) {
+        Connection connection = null;
+        CallableStatement callableStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            // Establish connection to the database
+            connection = DriverManager.getConnection(DB_URL, USER, PASSWORD);
+
+            // Prepare the callable statement
+            callableStatement = connection.prepareCall(storedProcCall);
+
+            // Set input parameters dynamically
+            for (Map.Entry<Integer, Object> entry : inputParams.entrySet()) {
+                int paramIndex = entry.getKey();
+                Object value = entry.getValue();
+                if (value instanceof String) {
+                    callableStatement.setString(paramIndex, (String) value);
+                } else if (value instanceof Integer) {
+                    callableStatement.setInt(paramIndex, (Integer) value);
+                } else if (value instanceof Double) {
+                    callableStatement.setDouble(paramIndex, (Double) value);
+                }
+                // Add more types as needed
+            }
+
+            // Register output parameters dynamically
+            for (Map.Entry<Integer, Integer> entry : outputParams.entrySet()) {
+                int paramIndex = entry.getKey();
+                int sqlType = entry.getValue();
+                callableStatement.registerOutParameter(paramIndex, sqlType);
+            }
+
+            // Execute the stored procedure
+            boolean hasResultSet = callableStatement.execute();
+
+            // Handle result sets dynamically
+            while (hasResultSet || callableStatement.getUpdateCount() != -1) {
+                if (hasResultSet) {
+                    resultSet = callableStatement.getResultSet();
+                    processResultSet(resultSet);  // Process result set in a separate method
+                } else {
+                    int updateCount = callableStatement.getUpdateCount();
+                    if (updateCount == -1) break;  // No more results
+                }
+                hasResultSet = callableStatement.getMoreResults();
+            }
+
+            // Retrieve output parameters dynamically
+            for (Map.Entry<Integer, Integer> entry : outputParams.entrySet()) {
+                int paramIndex = entry.getKey();
+                Object outputValue = callableStatement.getObject(paramIndex);
+                System.out.println("Output Parameter " + paramIndex + ": " + outputValue);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            // Clean up resources
+            try {
+                if (resultSet != null) resultSet.close();
+                if (callableStatement != null) callableStatement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void processResultSet(ResultSet resultSet) throws SQLException {
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int columnCount = metaData.getColumnCount();
+
+        while (resultSet.next()) {
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = metaData.getColumnName(i);
+                Object columnValue = resultSet.getObject(i);
+                System.out.println(columnName + ": " + columnValue);
+            }
+            System.out.println();
+        }
+    }
+}
+```
+
+### Key Features of the Code:
+
+1. **Dynamic Input Parameters**:
+   - `inputParams` is a `Map<Integer, Object>` where the key is the parameter index and the value is the actual input value.
+   - The code handles `String`, `Integer`, `Double`, and can be extended to handle more types.
+
+2. **Dynamic Output Parameters**:
+   - `outputParams` is a `Map<Integer, Integer>` where the key is the parameter index and the value is the SQL type (e.g., `Types.VARCHAR`, `Types.INTEGER`).
+   - The output values are retrieved dynamically after executing the stored procedure.
+
+3. **Result Set Handling**:
+   - The result set is processed dynamically using `ResultSetMetaData`, so it works for any number of columns and different data types.
+   - The `processResultSet` method is used to print out the result set, but you can modify this to handle more complex result set processing.
+
+4. **Multiple Result Sets and Update Counts**:
+   - The code handles stored procedures that return multiple result sets or a combination of result sets and update counts.
+   - It checks for more result sets using `callableStatement.getMoreResults()`.
+
+### Usage:
+
+- This code can handle any stored procedure by passing the correct stored procedure call string, input parameters, and output parameter types.
+- For example:
+  - If your stored procedure is `get_employee_details(?, ?, ?)`:
+    - The first two parameters are input, and the third is output.
+    - The `inputParams` map will include the input values.
+    - The `outputParams` map will register the output parameter with its SQL type.
+
+### How It Works:
+1. You provide the stored procedure call string like `{call your_stored_procedure(?, ?, ?)}`
+2. The input parameters are set dynamically based on their type.
+3. The output parameters are registered dynamically using `registerOutParameter()`.
+4. The result sets are processed using `ResultSetMetaData` to handle any number of columns or data types.
+5. After executing, the output parameters are retrieved using `getObject()`.
+
+### Flexibility:
+This approach is very flexible, allowing you to handle stored procedures with:
+- Any number of input/output parameters.
+- Any number of result sets (including multiple result sets).
+- Different data types for both input and output parameters.
+
+You can extend the `processResultSet()` method to handle more specific types of result sets if needed.
+
+†**†******************** example*****""
+Certainly! Here's an example of a SQL Server stored procedure that incorporates multiple input parameters, output parameters, multiple result sets, and performs different kinds of operations such as selecting, updating, and inserting. This stored procedure will help you test the generic Java code effectively.
+
+### Sample Stored Procedure for SQL Server:
+
+```sql
+CREATE PROCEDURE test_procedure (
+    @emp_id INT,                         -- Input parameter
+    @emp_name NVARCHAR(100),             -- Input parameter
+    @emp_salary DECIMAL(10, 2),          -- Input parameter
+    @emp_dept NVARCHAR(50),              -- Input parameter
+    @new_salary DECIMAL(10, 2),          -- Input parameter for updating salary
+    @status NVARCHAR(20) OUTPUT,         -- Output parameter for status
+    @total_employees INT OUTPUT          -- Output parameter for total employee count
+)
+AS
+BEGIN
+    -- Initialize the status
+    SET @status = 'Processing';
+
+    -- Insert a new employee record
+    INSERT INTO employees (emp_id, emp_name, emp_salary, emp_dept)
+    VALUES (@emp_id, @emp_name, @emp_salary, @emp_dept);
+
+    -- Update salary of the inserted employee
+    UPDATE employees
+    SET emp_salary = @new_salary
+    WHERE emp_id = @emp_id;
+
+    -- Select the updated employee details as the first result set
+    SELECT emp_id, emp_name, emp_salary, emp_dept
+    FROM employees
+    WHERE emp_id = @emp_id;
+
+    -- Select all employees in the department as the second result set
+    SELECT emp_id, emp_name, emp_salary
+    FROM employees
+    WHERE emp_dept = @emp_dept;
+
+    -- Count the total number of employees in the department and set it to output parameter
+    SELECT @total_employees = COUNT(*)
+    FROM employees
+    WHERE emp_dept = @emp_dept;
+
+    -- Finalize the status based on department count
+    IF @total_employees > 10
+        SET @status = 'Department is full';
+    ELSE
+        SET @status = 'Success';
+END;
+```
+
+### Explanation:
+
+- **Input Parameters**:
+  - `@emp_id`, `@emp_name`, `@emp_salary`, and `@emp_dept`: Used to insert a new employee.
+  - `@new_salary`: Used to update the salary of the inserted employee.
+  
+- **Output Parameters**:
+  - `@status`: Used to return a status message, which can vary based on department conditions.
+  - `@total_employees`: Returns the total number of employees in the specified department.
+
+- **Operations**:
+  - The procedure inserts a new employee into the `employees` table.
+  - It then updates the employee's salary.
+  - Two result sets are returned:
+    1. The updated employee details.
+    2. All employees in the specified department.
+  - It also calculates the total number of employees in the department and sets an appropriate status based on that count.
+
+### Sample `employees` Table:
+
+You can use the following SQL to create a basic `employees` table for testing:
+
+```sql
+CREATE TABLE employees (
+    emp_id INT PRIMARY KEY,
+    emp_name NVARCHAR(100),
+    emp_salary DECIMAL(10, 2),
+    emp_dept NVARCHAR(50)
+);
+
+-- Insert some initial data
+INSERT INTO employees (emp_id, emp_name, emp_salary, emp_dept)
+VALUES (1, 'John Doe', 50000, 'HR'),
+       (2, 'Jane Smith', 60000, 'Finance'),
+       (3, 'Bob Johnson', 70000, 'HR');
+```
+
+### How to Test:
+
+Using the generic Java code from earlier, you can call this stored procedure with the following parameters:
+
+- **Input Parameters**: Map the parameters like this:
+  - `1` → `emp_id`
+  - `2` → `emp_name`
+  - `3` → `emp_salary`
+  - `4` → `emp_dept`
+  - `5` → `new_salary`
+
+- **Output Parameters**: 
+  - `6` → `@status` (`Types.VARCHAR`)
+  - `7` → `@total_employees` (`Types.INTEGER`)
+
+### Example Java Call:
+
+```java
+public static void main(String[] args) {
+    Map<Integer, Object> inputParams = new HashMap<>();
+    inputParams.put(1, 4);  // emp_id
+    inputParams.put(2, "Alice Brown");  // emp_name
+    inputParams.put(3, 45000.00);  // emp_salary
+    inputParams.put(4, "HR");  // emp_dept
+    inputParams.put(5, 55000.00);  // new_salary
+
+    Map<Integer, Integer> outputParams = new HashMap<>();
+    outputParams.put(6, Types.VARCHAR);  // Output parameter for status
+    outputParams.put(7, Types.INTEGER);  // Output parameter for total employees
+
+    executeStoredProcedure("{call test_procedure(?, ?, ?, ?, ?, ?, ?)}", inputParams, outputParams);
+}
+```
+
+### Expected Results:
+
+- **First Result Set**: Should return the details of the employee just inserted and updated.
+- **Second Result Set**: Should return all employees in the same department (`HR`).
+- **Output Parameters**:
+  - `@status`: Will be either `'Department is full'` or `'Success'` based on the number of employees in the department.
+  - `@total_employees`: The count of employees in the `HR` department.
+
+This stored procedure is extensive enough to test various features such as:
+- Inserting and updating data.
+- Handling multiple result sets.
+- Processing input and output parameters.
