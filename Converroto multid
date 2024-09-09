@@ -1,0 +1,30 @@
+To append the dynamic columns in a generic way, you can use a `StringBuilder` and a loop to add each column with its corresponding `'%s'` placeholder. Here's an example:
+
+```
+List<String> groupByColumns = Arrays.asList("a", "b", "c"); // dynamic columns
+StringBuilder queryBuilder = new StringBuilder();
+
+queryBuilder.append("select input from %s.%s where id = '%d' And ");
+
+for (int i = 0; i < groupByColumns.size(); i++) {
+    queryBuilder.append(groupByColumns.get(i)).append(" = '%s'");
+    if (i < groupByColumns.size() - 1) {
+        queryBuilder.append(" And ");
+    }
+}
+
+queryBuilder.append(", datasetname, tablename, id, groupByColumnvalue");
+
+String query = String.format(queryBuilder.toString(), 
+    /* values for %s placeholders */);
+```
+
+In this example:
+
+- We define a `List` of dynamic columns (`groupByColumns`).
+- We create a `StringBuilder` to build the query string.
+- We loop through the dynamic columns and append each column with its corresponding `'%s'` placeholder to the query string.
+- We add the remaining columns (`datasetname`, `tablename`, `id`, `groupByColumnvalue`) to the query string.
+- Finally, we use `String.format` to replace the `%s` placeholders with the actual values.
+
+This way, you can handle any number of dynamic columns without having to manually append each one.
