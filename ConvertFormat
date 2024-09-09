@@ -1,0 +1,32 @@
+Here is a Java method that takes a comma-separated string as input and converts it to the desired format:
+
+```
+public class Main {
+    public static void main(String[] args) {
+        String input = "a, b, c";
+        System.out.println(convertInput(input));
+    }
+
+    public static String convertInput(String input) {
+        String[] values = input.split(", ");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < values.length; i++) {
+            sb.append(values[i]).append(" = '%s'");
+            if (i < values.length - 1) {
+                sb.append(" AND ");
+            }
+        }
+        return sb.toString();
+    }
+}
+```
+
+In this code:
+
+- The `convertInput` method takes a comma-separated string as input.
+- It splits the input string into an array of values using the `split` method.
+- It then iterates over the values array and appends each value to a `StringBuilder` in the desired format.
+- If it's not the last value, it appends " AND " to separate the conditions.
+- Finally, it returns the converted string.
+
+You can test this method with different inputs, like "a, b, c", "x, y", or "foo, bar, baz", and it will produce the corresponding output.
