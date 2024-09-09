@@ -1,32 +1,29 @@
-Here is a Java method that takes a comma-separated string as input and converts it to the desired format:
+Here's a revised version of the `convertInput` method that handles commas with varying amounts of whitespace:
 
 ```
-public class Main {
-    public static void main(String[] args) {
-        String input = "a, b, c";
-        System.out.println(convertInput(input));
-    }
-
-    public static String convertInput(String input) {
-        String[] values = input.split(", ");
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < values.length; i++) {
-            sb.append(values[i]).append(" = '%s'");
-            if (i < values.length - 1) {
-                sb.append(" AND ");
-            }
+public static String convertInput(String input) {
+    String[] values = input.split("\\s*,\\s*");
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < values.length; i++) {
+        sb.append(values[i]).append(" = '%s'");
+        if (i < values.length - 1) {
+            sb.append(" AND ");
         }
-        return sb.toString();
     }
+    return sb.toString();
 }
 ```
 
-In this code:
+In this revised method:
 
-- The `convertInput` method takes a comma-separated string as input.
-- It splits the input string into an array of values using the `split` method.
-- It then iterates over the values array and appends each value to a `StringBuilder` in the desired format.
-- If it's not the last value, it appends " AND " to separate the conditions.
-- Finally, it returns the converted string.
+- The `split` method uses a regular expression (`\\s*,\\s*`) to split the input string into values.
+- The regular expression matches commas with any amount of whitespace before and after them.
 
-You can test this method with different inputs, like "a, b, c", "x, y", or "foo, bar, baz", and it will produce the corresponding output.
+With this change, the method will correctly handle inputs like:
+
+- "a,b,c"
+- "a, b, c"
+- "a , b , c"
+- "a ,b , c"
+
+All of these inputs will produce the same output: "a = '%s' AND b = '%s' AND c = '%s'".
