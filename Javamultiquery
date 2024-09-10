@@ -1,0 +1,125 @@
+To make the `getChildLine` method more flexible and generic for dynamically fetching `hq`, `hq1`, `hq2`, etc., based on the dynamic input, you can approach the problem by:
+
+1. **Using a dynamic query** that will retrieve all the dynamic fields (`hq`, `hq1`, `hq2`, etc.) based on your table schema.
+2. **Dynamically updating the child query** in the `test` method by consuming the dynamic results retrieved from the `getChildLine` method.
+
+Below is the updated code that meets these requirements:
+
+### Updated Code:
+
+```java
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.TableResult;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+public class DynamicQueryHandler {
+
+    private BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+    private String projectId = "your_project_id";
+    private String datasetName = "your_dataset_name";
+    private String tableName = "your_table_name";
+
+    // Generic method to get child lines dynamically
+    private List<List<String>> getChildLine(int id, int hqCount) {
+        // Dynamically create the query to select hq, hq1, hq2, ...hqN based on hqCount
+        StringBuilder fields = new StringBuilder();
+        for (int i = 0; i <= hqCount; i++) {
+            if (i == 0) {
+                fields.append("hq");
+            } else {
+                fields.append(", hq").append(i);
+            }
+        }
+
+        String query = String.format("SELECT DISTINCT %s FROM `%s.%s.%s` WHERE id = %d", fields.toString(), projectId, datasetName, tableName, id);
+        QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query).build();
+
+        try {
+            TableResult result = bigQuery.query(queryConfig);
+
+            // Retrieve all hq, hq1, hq2, ... and put them into a list of lists
+            return StreamSupport.stream(result.iterateAll().spliterator(), false)
+                    .map(fieldValueList -> {
+                        List<String> hqValues = new ArrayList<>();
+                        for (int i = 0; i <= hqCount; i++) {
+                            hqValues.add(fieldValueList.get(i).getStringValue());
+                        }
+                        return hqValues;
+                    })
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    // Method to dynamically build the child query
+    private void test() {
+        int id = 1;
+        int hqCount = 3; // Assume we have hq, hq1, hq2, hq3 (hqCount = 3)
+
+        // Get the child line data dynamically
+        List<List<String>> childLineList = getChildLine(id, hqCount);
+
+        // Iterate over each child line and build the query
+        for (List<String> hqValues : childLineList) {
+            StringBuilder childQuery = new StringBuilder("SELECT data FROM table WHERE feedid = 1");
+
+            for (int i = 0; i < hqValues.size(); i++) {
+                if (i == 0) {
+                    childQuery.append(String.format(" AND hq = '%s'", hqValues.get(i)));
+                } else {
+                    childQuery.append(String.format(" AND hq%d = '%s'", i, hqValues.get(i)));
+                }
+            }
+
+            // Print the dynamically generated child query for each hq, hq1, hq2, etc.
+            System.out.println(childQuery.toString());
+        }
+    }
+
+    public static void main(String[] args) {
+        DynamicQueryHandler handler = new DynamicQueryHandler();
+        handler.test();
+    }
+}
+```
+
+### Explanation:
+
+1. **`getChildLine` Method**:
+   - This method dynamically constructs the SQL query based on the number of fields (`hq`, `hq1`, `hq2`, etc.) you want to select. The `hqCount` parameter specifies how many `hq` fields to include.
+   - It builds the `SELECT` statement dynamically, runs the query using BigQuery, and returns a `List<List<String>>`, where each list inside the parent list contains the `hq`, `hq1`, `hq2`, etc., values for a given row.
+
+2. **`test` Method**:
+   - This method calls `getChildLine` to fetch the `hq` fields dynamically.
+   - It then iterates over each set of `hq` values (returned as a list) and dynamically builds a `childQuery` using these values. The number of `AND hqN =` clauses in the query depends on the size of the `hqValues` list, which is dynamically determined by the number of columns fetched.
+
+3. **Main Method**:
+   - The `main` method is a simple test entry point to run the `test` method. You can run this method to test the dynamic query generation.
+
+### Example Output:
+
+Assuming that `getChildLine` returns the following list of `hq` values:
+```plaintext
+[
+  ["HQ1", "HQ1_1", "HQ1_2", "HQ1_3"],
+  ["HQ2", "HQ2_1", "HQ2_2", "HQ2_3"]
+]
+```
+
+The following queries will be dynamically generated and printed in the `test` method:
+
+```sql
+SELECT data FROM table WHERE feedid = 1 AND hq = 'HQ1' AND hq1 = 'HQ1_1' AND hq2 = 'HQ1_2' AND hq3 = 'HQ1_3';
+SELECT data FROM table WHERE feedid = 1 AND hq = 'HQ2' AND hq1 = 'HQ2_1' AND hq2 = 'HQ2_2' AND hq3 = 'HQ2_3';
+```
+
+### Key Points:
+- **Dynamic Query Generation**: The `getChildLine` method dynamically builds the query based on the number of `hq` columns, making the method flexible to handle any number of `hq` columns (based on `hqCount`).
+- **Flexible Child Queries**: The `test` method then consumes the dynamic result and generates child queries based on the retrieved `hq` values.
