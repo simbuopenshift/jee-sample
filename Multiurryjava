@@ -1,0 +1,129 @@
+To handle the scenario where the `hq`, `hq1`, `hq2`, etc., column names are dynamic and provided as a comma-separated input (e.g., `String inputColumns = "hq, hq1, hq3, ... n"`), we need to modify the code to be more generic. This way, the column names can be dynamically parsed from the input string, and the query will be constructed accordingly.
+
+Here’s the updated code:
+
+### Updated Code with `inputColumns`:
+
+```java
+import com.google.cloud.bigquery.BigQuery;
+import com.google.cloud.bigquery.BigQueryOptions;
+import com.google.cloud.bigquery.QueryJobConfiguration;
+import com.google.cloud.bigquery.TableResult;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+public class DynamicQueryHandler {
+
+    private BigQuery bigQuery = BigQueryOptions.getDefaultInstance().getService();
+    private String projectId = "your_project_id";
+    private String datasetName = "your_dataset_name";
+    private String tableName = "your_table_name";
+
+    // Generic method to get child lines dynamically based on input columns
+    private List<List<String>> getChildLine(int id, String inputColumns) {
+        // Parse inputColumns into a list of column names
+        List<String> columns = Arrays.stream(inputColumns.split(","))
+                                     .map(String::trim)
+                                     .collect(Collectors.toList());
+
+        // Dynamically create the query based on the parsed columns
+        String columnsQueryPart = String.join(", ", columns);
+        String query = String.format("SELECT DISTINCT %s FROM `%s.%s.%s` WHERE id = %d",
+                columnsQueryPart, projectId, datasetName, tableName, id);
+        
+        QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query).build();
+
+        try {
+            TableResult result = bigQuery.query(queryConfig);
+
+            // Retrieve all dynamic columns and put them into a list of lists
+            return StreamSupport.stream(result.iterateAll().spliterator(), false)
+                    .map(fieldValueList -> {
+                        List<String> columnValues = new ArrayList<>();
+                        for (String column : columns) {
+                            columnValues.add(fieldValueList.get(column).getStringValue());
+                        }
+                        return columnValues;
+                    })
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    // Method to dynamically build the child query based on input columns
+    private void test() {
+        int id = 1;
+        String inputColumns = "hq, hq1, hq3"; // Dynamic column names
+        
+        // Get the child line data dynamically
+        List<List<String>> childLineList = getChildLine(id, inputColumns);
+
+        // Parse the input columns to get individual column names
+        List<String> columns = Arrays.stream(inputColumns.split(","))
+                                     .map(String::trim)
+                                     .collect(Collectors.toList());
+
+        // Iterate over each child line and build the query
+        for (List<String> columnValues : childLineList) {
+            StringBuilder childQuery = new StringBuilder("SELECT data FROM table WHERE feedid = 1");
+
+            for (int i = 0; i < columnValues.size(); i++) {
+                childQuery.append(String.format(" AND %s = '%s'", columns.get(i), columnValues.get(i)));
+            }
+
+            // Print the dynamically generated child query for each set of column values
+            System.out.println(childQuery.toString());
+        }
+    }
+
+    public static void main(String[] args) {
+        DynamicQueryHandler handler = new DynamicQueryHandler();
+        handler.test();
+    }
+}
+```
+
+### Explanation of Changes:
+
+1. **Input Columns (`inputColumns`)**:
+   - The input column names are now dynamic and provided as a comma-separated string (`String inputColumns = "hq, hq1, hq3"`).
+   - The `inputColumns` string is split into individual column names using `split(",")` and stored as a list (`columns`).
+
+2. **Dynamic Query Construction**:
+   - Instead of hardcoding column names like `hq`, `hq1`, `hq2`, the query construction is now based on the dynamically parsed column names from `inputColumns`. This ensures that the column names can vary in each case.
+   - The `getChildLine` method dynamically selects the columns specified in `inputColumns` from the table.
+
+3. **Dynamic Child Query in `test` Method**:
+   - The `test` method consumes the dynamic result from `getChildLine` and constructs the child query (`childQuery`) using the values of the dynamic columns. 
+   - For each row of results, it iterates through the column names and corresponding values, appending them to the `childQuery`.
+
+4. **Generic Handling**:
+   - The code now supports any column names provided in the `inputColumns` string, making it reusable and flexible.
+
+### Example Output:
+
+Suppose `inputColumns = "hq, hq1, hq3"` and the `getChildLine` method retrieves the following rows from the database:
+```plaintext
+[
+  ["HQ1", "HQ1_1", "HQ1_3"],
+  ["HQ2", "HQ2_1", "HQ2_3"]
+]
+```
+
+The following child queries will be dynamically generated and printed:
+
+```sql
+SELECT data FROM table WHERE feedid = 1 AND hq = 'HQ1' AND hq1 = 'HQ1_1' AND hq3 = 'HQ1_3';
+SELECT data FROM table WHERE feedid = 1 AND hq = 'HQ2' AND hq1 = 'HQ2_1' AND hq3 = 'HQ2_3';
+```
+
+### Key Points:
+- The solution dynamically handles **any column names** provided through the `inputColumns` string.
+- It constructs both the `SELECT` query in `getChildLine` and the `childQuery` in `test` based on these dynamic column names.
+- The code is reusable and adaptable for various combinations of columns and queries.
