@@ -28,3 +28,53 @@ In this example:
 - Finally, we use `String.format` to replace the `%s` placeholders with the actual values.
 
 This way, you can handle any number of dynamic columns without having to manually append each one.
+
+
+Here's the updated code with sample placeholder values:
+
+```
+List<String> groupByColumns = Arrays.asList("a", "b", "c"); // dynamic columns
+StringBuilder queryBuilder = new StringBuilder();
+queryBuilder.append("select input from %s.%s where id = '%d' And ");
+
+for (int i = 0; i < groupByColumns.size(); i++) {
+    queryBuilder.append(groupByColumns.get(i)).append(" = '%s'");
+    if (i < groupByColumns.size() - 1) {
+        queryBuilder.append(" And ");
+    }
+}
+
+queryBuilder.append(", datasetname, tablename, id, groupByColumnvalue");
+
+// Sample placeholder values
+String tableName = "my_table";
+String schemaName = "my_schema";
+int id = 123;
+String aValue = "alpha";
+String bValue = "bravo";
+String cValue = "charlie";
+String datasetName = "my_dataset";
+String table_name = "my_table_name";
+String groupByColumnValue = "my_group_by_value";
+
+String query = String.format(queryBuilder.toString(), 
+    schemaName, tableName, id, 
+    aValue, bValue, cValue, 
+    datasetName, table_name, groupByColumnValue);
+
+System.out.println(query);
+```
+
+In this example, I added sample values for the placeholders:
+
+- `schemaName`: "my_schema"
+- `tableName`: "my_table"
+- `id`: 123
+- `aValue`: "alpha"
+- `bValue`: "bravo"
+- `cValue`: "charlie"
+- `datasetName`: "my_dataset"
+- `table_name`: "my_table_name"
+- `groupByColumnValue`: "my_group_by_value"
+
+These values will replace the `%s` placeholders in the query string. The output will be a complete SQL query with the dynamic columns and values.
