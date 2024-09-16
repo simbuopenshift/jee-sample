@@ -1,0 +1,341 @@
+Sure! I'll extend the previous code to include full getter/setter methods, custom queries, business logic, validations, and error handling as per your request. Here's the complete code and breakdown of all components:
+
+---
+
+### 1. **`pom.xml` (Dependencies)**
+
+Ensure you have the following dependencies in your `pom.xml`:
+
+```xml
+<dependencies>
+    <!-- Spring Boot Dependencies -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <!-- Database Driver (for MySQL) -->
+    <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+
+    <!-- Lombok for cleaner code (optional) -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <scope>provided</scope>
+    </dependency>
+</dependencies>
+```
+
+---
+
+### 2. **DTO with Validation (`TaskDTO.java`)**
+
+```java
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.util.Date;
+
+public class TaskDTO {
+
+    @NotNull(message = "Task description cannot be null")
+    @Size(max = 1000, message = "Task description should not exceed 1000 characters")
+    private String taskDescription;
+
+    @NotNull(message = "Employee number cannot be null")
+    @Size(max = 8, message = "Employee number must be 8 characters")
+    private String empNo;
+
+    @NotNull(message = "From date cannot be null")
+    private Date fromDate;
+
+    @NotNull(message = "To date cannot be null")
+    private Date toDate;
+
+    // Getters and Setters
+    public String getTaskDescription() {
+        return taskDescription;
+    }
+
+    public void setTaskDescription(String taskDescription) {
+        this.taskDescription = taskDescription;
+    }
+
+    public String getEmpNo() {
+        return empNo;
+    }
+
+    public void setEmpNo(String empNo) {
+        this.empNo = empNo;
+    }
+
+    public Date getFromDate() {
+        return fromDate;
+    }
+
+    public void setFromDate(Date fromDate) {
+        this.fromDate = fromDate;
+    }
+
+    public Date getToDate() {
+        return toDate;
+    }
+
+    public void setToDate(Date toDate) {
+        this.toDate = toDate;
+    }
+}
+```
+
+---
+
+### 3. **Entity Class (`UnplannedTask.java`)**
+
+```java
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "unplanned_tasks")
+public class UnplannedTask {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String projectCode;
+    private String activityCode;
+    private String description;
+    private Long projectId;
+    private Long unitId;
+    private Integer activityCodeId;
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getProjectCode() {
+        return projectCode;
+    }
+
+    public void setProjectCode(String projectCode) {
+        this.projectCode = projectCode;
+    }
+
+    public String getActivityCode() {
+        return activityCode;
+    }
+
+    public void setActivityCode(String activityCode) {
+        this.activityCode = activityCode;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Long getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(Long projectId) {
+        this.projectId = projectId;
+    }
+
+    public Long getUnitId() {
+        return unitId;
+    }
+
+    public void setUnitId(Long unitId) {
+        this.unitId = unitId;
+    }
+
+    public Integer getActivityCodeId() {
+        return activityCodeId;
+    }
+
+    public void setActivityCodeId(Integer activityCodeId) {
+        this.activityCodeId = activityCodeId;
+    }
+}
+```
+
+---
+
+### 4. **Repository Layer (`UnplannedTaskRepository.java`)**
+
+```java
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.util.List;
+
+public interface UnplannedTaskRepository extends JpaRepository<UnplannedTask, Long> {
+
+    @Query("SELECT t FROM UnplannedTask t WHERE t.projectId = :projectId AND t.activityCodeId = :activityCodeId AND t.description = :description")
+    List<UnplannedTask> findExistingTask(@Param("projectId") Long projectId, 
+                                         @Param("activityCodeId") Integer activityCodeId, 
+                                         @Param("description") String description);
+
+    @Query("SELECT u FROM UnplannedTask u WHERE u.projectCode = :projectCode")
+    List<UnplannedTask> findByProjectCode(@Param("projectCode") String projectCode);
+
+    @Query("SELECT u FROM UnplannedTask u WHERE u.projectId IS NULL")
+    List<UnplannedTask> findUnassignedTasks();
+}
+```
+
+---
+
+### 5. **Service Layer (`TaskService.java`)**
+
+This service includes the business logic from the SQL procedure, validations, and custom queries.
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class TaskService {
+
+    @Autowired
+    private UnplannedTaskRepository taskRepository;
+
+    @Autowired
+    private UserService userService; // Assuming there is a user service for fetching user category
+
+    public void addTask(TaskDTO taskDTO) {
+        // Validate Employee Details
+        Integer userCategoryId = userService.getUserCategoryId(taskDTO.getEmpNo(), taskDTO.getFromDate(), taskDTO.getToDate());
+        if (userCategoryId == null) {
+            throw new IllegalArgumentException("Employee not found or does not have valid category");
+        }
+
+        // Split Task Data using utility
+        List<String> taskData = TaskUtils.splitTaskData(taskDTO.getTaskDescription(), "-");
+        if (taskData == null || taskData.isEmpty()) {
+            throw new IllegalArgumentException("Invalid task data format");
+        }
+
+        String projectCode = taskData.get(0).trim();
+        String description = String.join(", ", taskData.subList(1, taskData.size() - 1)).trim();
+        String activityCode = taskData.get(taskData.size() - 1).trim();
+
+        // Perform business logic similar to stored procedure
+        Optional<UnplannedTask> existingTask = taskRepository
+                .findExistingTask(getProjectId(projectCode), getActivityCodeId(activityCode), description)
+                .stream().findFirst();
+
+        if (!existingTask.isPresent()) {
+            UnplannedTask task = new UnplannedTask();
+            task.setProjectCode(projectCode);
+            task.setDescription(description);
+            task.setActivityCode(activityCode);
+            task.setProjectId(getProjectId(projectCode));
+            task.setUnitId(getUnitId());
+            task.setActivityCodeId(getActivityCodeId(activityCode));
+            taskRepository.save(task);
+        } else {
+            // Handle logic if task already exists (optional)
+            throw new IllegalArgumentException("Task already exists with the same description");
+        }
+    }
+
+    private Long getProjectId(String projectCode) {
+        // Fetch project ID based on the project code logic here
+        return 100L; // Example project ID
+    }
+
+    private Integer getActivityCodeId(String activityCode) {
+        // Fetch activity code ID based on the activity code
+        return 101; // Example activity code ID
+    }
+
+    private Long getUnitId() {
+        // Unit ID logic (dummy example)
+        return 1L;
+    }
+
+    public List<UnplannedTask> getAllTasks() {
+        return taskRepository.findAll();
+    }
+
+    public List<UnplannedTask> getUnassignedTasks() {
+        return taskRepository.findUnassignedTasks();
+    }
+}
+```
+
+---
+
+### 6. **User Service (`UserService.java`)**
+
+This service handles user category lookup, which was part of the original SQL.
+
+```java
+import org.springframework.stereotype.Service;
+import java.util.Date;
+
+@Service
+public class UserService {
+
+    public Integer getUserCategoryId(String empNo, Date fromDate, Date toDate) {
+        // Mock logic to simulate user category lookup, replace this with actual DB queries
+        if (empNo.equals("CANNonExempt")) {
+            return 1; // Non-exempt category
+        } else if (empNo.equals("CANExempt")) {
+            return 2; // Exempt category
+        } else {
+            return null; // No matching user
+        }
+    }
+}
+```
+
+---
+
+### 7. **Controller Layer (`TaskController.java`)**
+
+Controller that exposes REST endpoints for adding and fetching tasks.
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/tasks")
+@Validated
+public class TaskController {
+
+    @Autowired
+    private TaskService taskService;
+
+    @PostMapping("/add")
+    public ResponseEntity<String> addTask(@RequestBody @Validated TaskDTO
