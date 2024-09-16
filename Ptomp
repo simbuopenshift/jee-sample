@@ -56,3 +56,7 @@ Please convert the following SQL stored procedure into a complete, functional Sp
 ---
 
 This structured prompt should cover all the necessary aspects for a smooth conversion from the SQL stored procedure to a Spring Boot Java application while ensuring that nothing is missed.
+
+Please update the below prompt in more organised way and if any points missed please add
+
+Please convert the below sql stored procedure complete code to springboot java code that should contain all relevant classes dto entity service, repository, utils and additional dependecy classes if any to make the code more valid, need end to end working code ,  do not give partial code need full code for this stored procedure and also give manual steps need to be done after downloading this code, also manual code percentage
