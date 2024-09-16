@@ -1,0 +1,166 @@
+To convert the given SQL stored procedure to Spring Boot Java code, the following steps are involved:
+
+### 1. **DTO (Data Transfer Object)**
+You need to create a DTO class to transfer data from the controller to the service layer.
+
+```java
+public class TimesheetTaskDTO {
+    private String taskDescription;
+    private String empNo;
+    private LocalDate fromDate;
+    private LocalDate toDate;
+
+    // Getters and Setters
+}
+```
+
+### 2. **Entity**
+You will need to create an entity class that represents the `TIMETrnUnPlanTask` and other related tables.
+
+```java
+@Entity
+@Table(name = "TIMETrnUnPlanTask")
+public class TimesheetTask {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long taskId;
+
+    private String empNo;
+    private Long projectId;
+    private String projectCode;
+    private Long unitId;
+    private Long activityCodeId;
+    private Long userCategoryId;
+    private String description;
+    private Boolean flgDeleted;
+
+    // Other fields, Getters, and Setters
+}
+```
+
+### 3. **Repository**
+The repository class is an interface that extends `JpaRepository` for database interactions.
+
+```java
+@Repository
+public interface TimesheetTaskRepository extends JpaRepository<TimesheetTask, Long> {
+    // Add any necessary query methods
+}
+```
+
+### 4. **Service**
+The service class will handle the business logic, such as inserting, updating, and deleting tasks.
+
+```java
+@Service
+public class TimesheetTaskService {
+
+    @Autowired
+    private TimesheetTaskRepository timesheetTaskRepository;
+
+    public void addTimesheetTask(TimesheetTaskDTO dto) {
+        TimesheetTask task = new TimesheetTask();
+        // Business logic from the stored procedure
+
+        // Example: Set fields to task from DTO
+        task.setEmpNo(dto.getEmpNo());
+        task.setDescription(dto.getTaskDescription());
+
+        // Save the task
+        timesheetTaskRepository.save(task);
+    }
+}
+```
+
+### 5. **Controller**
+The controller will handle incoming HTTP requests.
+
+```java
+@RestController
+@RequestMapping("/api/timesheet")
+public class TimesheetTaskController {
+
+    @Autowired
+    private TimesheetTaskService timesheetTaskService;
+
+    @PostMapping("/addTask")
+    public ResponseEntity<String> addTimesheetTask(@RequestBody TimesheetTaskDTO dto) {
+        timesheetTaskService.addTimesheetTask(dto);
+        return ResponseEntity.ok("Task added successfully");
+    }
+}
+```
+
+### 6. **Additional Business Logic**
+You will need to add the following business logic from the stored procedure into the service layer:
+
+- Logic to fetch and manipulate `#TblUnplannedTaskRow` in Java.
+- Logic to handle different `CANNonExempt`, `CANExempt`, and other user categories.
+- Use `CriteriaQuery`, `JPQL`, or native SQL to replace the SQL queries in the stored procedure, such as those using `TIMEMstUSEmpDetails`, `TIMEMstProjectInfo`, and `TIMEMstActivitycode`.
+
+For example, to implement this section:
+
+```sql
+if exists(select Top 1 1 from testowner.TIMEMstUSEmpDetails ...)
+```
+
+You would write:
+
+```java
+Optional<UserDetails> userDetails = userDetailsRepository.findTop1ByEmpNoAndExemptStatus(dto.getEmpNo(), "CANNonExempt");
+if (userDetails.isPresent()) {
+    // Set the UserCategoryId
+}
+```
+
+### 7. **Repositories for Related Tables**
+For each related table in the procedure, such as `TIMEMstUSEmpDetails`, `TIMEMstActivitycode`, and `TIMEMstProjectInfo`, you need to create corresponding repository interfaces.
+
+For example, for `TIMEMstUSEmpDetails`:
+
+```java
+@Repository
+public interface UserDetailsRepository extends JpaRepository<UserDetails, Long> {
+    Optional<UserDetails> findTop1ByEmpNoAndExemptStatus(String empNo, String exemptStatus);
+}
+```
+
+### 8. **Necessary Dependencies**
+Ensure you have the following dependencies in your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+<dependency>
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId> <!-- Or MySQL/PostgreSQL as per your DB -->
+    <scope>runtime</scope>
+</dependency>
+```
+
+### 9. **Additional Setup**
+- **Database Connection Configuration**: Add your database configuration in `application.properties` or `application.yml`:
+
+```properties
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driver-class-name=org.h2.Driver
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+```
+
+- **Custom Native Queries**: You might need to write native SQL queries in repositories for complex queries.
+
+### Summary:
+The developer needs to:
+1. **Add the DTO, Entity, Repository, and Service classes**.
+2. **Implement business logic in the service layer**.
+3. **Write native SQL queries for complex logic**.
+4. **Ensure proper database setup and configuration**.
+
+
+
