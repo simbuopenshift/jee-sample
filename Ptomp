@@ -1,0 +1,58 @@
+Certainly! Here's an updated and more organized version of the prompt:
+
+---
+
+### Request:
+
+Please convert the following SQL stored procedure into a complete, functional Spring Boot Java application. The conversion should include all relevant components, ensuring the code is end-to-end and fully working.
+
+### Requirements:
+
+1. **Code Structure**:
+   - Provide complete and well-structured code for the following layers:
+     - **DTO (Data Transfer Object)**: To transfer data between client and server.
+     - **Entity**: Representing the database table(s) in the application.
+     - **Service**: Business logic and processing.
+     - **Repository**: For database operations and custom queries.
+     - **Utils**: Utility/helper functions required for processing.
+     - **Controller**: Exposing REST endpoints for API requests.
+     - **Error Handling**: Include appropriate error/exception handling for validation and runtime exceptions.
+
+2. **Database Integration**:
+   - Include all necessary database-related configuration.
+   - Use proper JPA repository classes and queries for database operations, converting the logic from the SQL stored procedure.
+
+3. **Business Logic**:
+   - Translate the complete business logic from the SQL stored procedure to the service layer of the Spring Boot application.
+   - Ensure any necessary validation and handling of edge cases.
+   - Include any custom queries that were originally part of the stored procedure in the repository layer.
+
+4. **Dependencies**:
+   - Include any necessary dependencies in the `pom.xml` (or `build.gradle` if applicable) for the following:
+     - Spring Boot
+     - Spring Data JPA
+     - Hibernate (or any other ORM)
+     - Validation (if required)
+     - Database driver (e.g., MySQL, PostgreSQL, etc.)
+
+5. **Validation**:
+   - Implement validation logic where necessary (e.g., for incoming request data).
+   - Use appropriate validation annotations like `@NotNull`, `@Size`, etc., in the DTO layer.
+
+6. **Manual Steps**:
+   - Provide detailed manual steps on how to:
+     - Download the project.
+     - Configure the database and other required settings.
+     - Run the application.
+     - Test the endpoints using Postman or any HTTP client.
+  
+7. **Manual Code Percentage**:
+   - Specify the percentage of manual code added compared to auto-generated Spring Boot functionality, separating it by components such as:
+     - Business logic
+     - Query customization
+     - Utility functions
+     - Error handling
+
+---
+
+This structured prompt should cover all the necessary aspects for a smooth conversion from the SQL stored procedure to a Spring Boot Java application while ensuring that nothing is missed.
