@@ -1,0 +1,211 @@
+Converting such a detailed SQL stored procedure into a fully functional Spring Boot Java application involves multiple layers and tasks, including database configuration, entity mapping, service layer logic, repository interactions, utility functions, and error handling. Here’s how we can break down the process into manageable steps:
+
+### Steps to Implement Spring Boot Code for the SQL Stored Procedure:
+
+#### 1. **Database Configuration**
+   - Set up the database configuration in `application.properties` or `application.yml`.
+   - Use Spring Data JPA for entity and repository handling.
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/yourdb
+spring.datasource.username=root
+spring.datasource.password=password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+```
+
+#### 2. **Entities (Mapping Database Tables)**
+
+Each table referenced in the stored procedure will need to be represented by an entity in the Java code.
+
+```java
+@Entity
+@Table(name = "ProffittrnGMPStatus")
+public class GMPStatus {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long intStatusId;
+    
+    private String txtStatus;
+    private Date dtStatusUpdateDate;
+    private String txtFinanceRemarks;
+    private Boolean flgIsValidated;
+    private String txtInValidationReason;
+
+    // Getters and Setters
+}
+
+@Entity
+@Table(name = "ProffittrnGMPDetails")
+public class GMPDetails {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long intGMPDetailsId;
+
+    private Long intStatusId;
+    private String txtQuarter;
+    private Date dtFinanceUpdatedOn;
+    private String txtGMP;
+
+    // Getters and Setters
+}
+
+@Entity
+@Table(name = "ProffittrnCPCDetails")
+public class CPCDetails {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long intCPCId;
+
+    private String txtChildProjectCode;
+    private String txtQuarter;
+    private String txtGMP;
+    private String txtServiceLine;
+    private String txtContractType;
+
+    // Getters and Setters
+}
+```
+
+#### 3. **DTO (Data Transfer Object)**
+
+Define DTOs to encapsulate data being sent between the client and the server. These DTOs will represent the objects being passed from the API requests and responses.
+
+```java
+public class ProjectDetailsDTO {
+    private String txtStatus;
+    private String txtFinanceRemarks;
+    private Boolean flgIsValidated;
+    private String txtInValidationReason;
+    private String txtMailId;
+    private Date dtFinanceUpdatedOn;
+
+    // Getters and Setters
+}
+```
+
+#### 4. **Repository Layer**
+
+Create repositories for each entity to handle database operations. For custom queries, you can either use JPQL or native SQL queries.
+
+```java
+@Repository
+public interface GMPStatusRepository extends JpaRepository<GMPStatus, Long> {
+    @Query("SELECT DISTINCT new com.example.dto.ProjectDetailsDTO(" +
+            "g.txtStatus, g.txtFinanceRemarks, g.flgIsValidated, g.txtInValidationReason, e.txtMailId, g.dtFinanceUpdatedOn) " +
+            "FROM GMPStatus g JOIN GMPDetails d ON g.intStatusId = d.intStatusId " +
+            "WHERE d.txtQuarter = :quarter AND d.txtChildProjectCode = :childProjectCode")
+    List<ProjectDetailsDTO> findProjectDetails(@Param("quarter") String quarter, @Param("childProjectCode") String childProjectCode);
+}
+```
+
+#### 5. **Service Layer**
+
+The service layer will handle the business logic. This is where you would convert the logic from the SQL stored procedure to Java code. For example, handling the decision-making based on the `@txtFlagImpact` flag.
+
+```java
+@Service
+public class ProjectService {
+
+    @Autowired
+    private GMPStatusRepository gmpStatusRepository;
+
+    public List<ProjectDetailsDTO> getProjectDetails(String quarter, String childProjectCode, Integer flagImpact) {
+        if (flagImpact == 1) {
+            return gmpStatusRepository.findProjectDetails(quarter, childProjectCode);
+        } else {
+            // Different logic for flagImpact != 1
+        }
+    }
+}
+```
+
+#### 6. **Controller Layer**
+
+This layer exposes the REST API that clients will use to interact with the service.
+
+```java
+@RestController
+@RequestMapping("/api/projects")
+public class ProjectController {
+
+    @Autowired
+    private ProjectService projectService;
+
+    @GetMapping("/{quarter}/{childProjectCode}")
+    public ResponseEntity<List<ProjectDetailsDTO>> getProjectDetails(
+            @PathVariable String quarter,
+            @PathVariable String childProjectCode,
+            @RequestParam Integer flagImpact) {
+        return ResponseEntity.ok(projectService.getProjectDetails(quarter, childProjectCode, flagImpact));
+    }
+}
+```
+
+#### 7. **Utility Classes (if necessary)**
+
+You may have utility classes to handle specific business logic, such as string manipulations or date formatting. For example:
+
+```java
+public class DateUtils {
+    public static String formatDate(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        return sdf.format(date);
+    }
+}
+```
+
+#### 8. **Validation**
+
+Ensure validation is applied at the DTO level using annotations.
+
+```java
+public class ProjectDetailsDTO {
+    
+    @NotNull(message = "Status cannot be null")
+    private String txtStatus;
+    
+    @Size(max = 200, message = "Remarks cannot exceed 200 characters")
+    private String txtFinanceRemarks;
+    
+    // Other fields, getters, and setters
+}
+```
+
+#### 9. **Manual Steps for Running the Application**
+
+1. **Download and Setup**:
+   - Clone the repository.
+   - Import the project into your IDE (e.g., IntelliJ IDEA, Eclipse).
+
+2. **Configure the Database**:
+   - Modify the `application.properties` file with your database credentials.
+   - Run the necessary SQL scripts to set up the schema in the database.
+
+3. **Run the Application**:
+   - Use the following command to run the application:
+     ```bash
+     mvn spring-boot:run
+     ```
+   - Ensure that the database is up and running.
+
+4. **Test the API**:
+   - Use Postman or any HTTP client to test the API.
+   - Example request:
+     ```
+     GET http://localhost:8080/api/projects/Q1-2024/CHILD123?flagImpact=1
+     ```
+
+#### 10. **Manual Code Percentage Breakdown**
+
+- **Business Logic (Service Layer)**: ~40% (this is where most of the manual work will go).
+- **Custom Queries (Repository)**: ~30% (writing custom queries to mimic the SQL stored procedure logic).
+- **Utility Functions**: ~10% (date manipulation, string handling, etc.).
+- **Error Handling and Validation**: ~20% (ensuring input data is validated and errors are handled correctly).
+
+---
+
+This breakdown provides a clear roadmap for converting the SQL stored procedure into a Spring Boot application. Each section provides a snippet or explanation of the relevant code, ensuring that the final application is complete and ready for testing.
