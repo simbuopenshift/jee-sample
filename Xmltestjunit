@@ -1,0 +1,118 @@
+Here's an example of how you can write Mockito-based JUnit tests for the `validateXML` method, focusing on covering the `NotFoundException` exception:
+
+```
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@RunWith(MockitoJUnitRunner.class)
+public class XMLValidatorTest {
+
+    @InjectMocks
+    private XMLValidator xmlValidator;
+
+    @Mock
+    private Blob xsdB10b;
+
+    @Mock
+    private Storage storage;
+
+    @Mock
+    private Logger log;
+
+    @Test
+    public void testValidateXML_SUCCESS() throws Exception {
+        // Arrange
+        Document document = mock(Document.class);
+        BufferedWriter writer = mock(BufferedWriter.class);
+        String input = "input";
+        Blob blobId = mock(Blob.class);
+
+        // Stubbing
+        when(storage.get(blobId)).thenReturn("xmlContent");
+
+        // Act
+        boolean result = xmlValidator.validateXML(document, writer, xsdB10b, input, storage, blobId);
+
+        // Assert
+        verify(writer, times(1)).flush();
+        verify(writer, times(1)).close();
+        assertEquals(true, result);
+    }
+
+    @Test
+    public void testValidateXML_TransformerException() {
+        // Arrange
+        Document document = mock(Document.class);
+        BufferedWriter writer = mock(BufferedWriter.class);
+        String input = "input";
+        Blob blobId = mock(Blob.class);
+
+        // Stubbing
+        TransformerFactory transformerFactory = mock(TransformerFactory.class);
+        Transformer transformer = mock(Transformer.class);
+        when(transformerFactory.newTransformer()).thenReturn(transformer);
+        when(transformer.transform(any(), any())).thenThrow(TransformerException.class);
+
+        // Act and Assert
+        assertThrows(PobException.class, () -> xmlValidator.validateXML(document, writer, xsdB10b, input, storage, blobId));
+    }
+
+    @Test
+    public void testValidateXML_NotFoundException() {
+        // Arrange
+        Document document = mock(Document.class);
+        BufferedWriter writer = mock(BufferedWriter.class);
+        String input = "input";
+        Blob blobId = mock(Blob.class);
+
+        // Stubbing
+        when(storage.get(blobId)).thenReturn(null);
+
+        // Act and Assert
+        PobException exception = assertThrows(PobException.class, () -> xmlValidator.validateXML(document, writer, xsdB10b, input, storage, blobId));
+        assertEquals("Exception occurred while writing data to 1 due to data lineltem file", exception.getMessage());
+    }
+
+    @Test
+    public void testValidateXML_IOException() {
+        // Arrange
+        Document document = mock(Document.class);
+        BufferedWriter writer = mock(BufferedWriter.class);
+        String input = "input";
+        Blob blobId = mock(Blob.class);
+
+        // Stubbing
+        doThrow(IOException.class).when(writer).flush();
+
+        // Act and Assert
+        assertThrows(PobException.class, () -> xmlValidator.validateXML(document, writer, xsdB10b, input, storage, blobId));
+    }
+}
+```
+
+In the above test class:
+
+- We use Mockito to mock the dependencies (`Blob`, `Storage`, `Logger`, `Document`, `BufferedWriter`, `TransformerFactory`, and `Transformer`).
+- We use `@InjectMocks` to inject the mocks into the `XMLValidator` instance.
+- We have four test methods:
+    - `testValidateXML_SUCCESS`: Tests the successful execution of the `validateXML` method.
+    - `testValidateXML_TransformerException`: Tests the `TransformerException` scenario.
+    - `testValidateXML_NotFoundException`: Tests the `NotFoundException` scenario (focus of this example).
+    - `testValidateXML_IOException`: Tests the `IOException` scenario.
+
+By using Mockito, we can isolate the unit under test and verify its behavior in different scenarios.
