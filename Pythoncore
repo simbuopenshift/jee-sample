@@ -1,0 +1,139 @@
+Here's the modified code:
+
+```
+from datetime import datetime, timedelta
+from airflow import DAG
+from airflow.providers.google.cloud.operators.bigquery import BigQueryOperator
+from airflow.operators.email import EmailOperator
+
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2023, 3, 21),
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+dag = DAG(
+    'gbq_query_email_dag',
+    default_args=default_args,
+    schedule_interval=timedelta(days=1),
+)
+
+# Query 1
+query1 = BigQueryOperator(
+    task_id='query1',
+    sql='''
+        SELECT 
+            column1 
+        FROM 
+            `project-id.dataset-id.view1`
+    ''',
+    destination_dataset_table='dataset-id.temp_table1',
+    create_disposition='CREATE_IF_NEEDED',
+    write_disposition='WRITE_TRUNCATE',
+    gcp_conn_id='bigquery_default',
+    dag=dag,
+)
+
+# Query 2
+query2 = BigQueryOperator(
+    task_id='query2',
+    sql='''
+        SELECT 
+            column2 
+        FROM 
+            `project-id.dataset-id.view2`
+    ''',
+    destination_dataset_table='dataset-id.temp_table2',
+    create_disposition='CREATE_IF_NEEDED',
+    write_disposition='WRITE_TRUNCATE',
+    gcp_conn_id='bigquery_default',
+    dag=dag,
+)
+
+# Query 3
+query3 = BigQueryOperator(
+    task_id='query3',
+    sql='''
+        SELECT 
+            column3 
+        FROM 
+            `project-id.dataset-id.view3`
+    ''',
+    destination_dataset_table='dataset-id.temp_table3',
+    create_disposition='CREATE_IF_NEEDED',
+    write_disposition='WRITE_TRUNCATE',
+    gcp_conn_id='bigquery_default',
+    dag=dag,
+)
+
+# Merge results
+merge_results = BigQueryOperator(
+    task_id='merge_results',
+    sql='''
+        SELECT 
+            t1.column1, 
+            t2.column2, 
+            t3.column3, 
+            'static_value' AS column4
+        FROM 
+            `dataset-id.temp_table1` t1,
+            `dataset-id.temp_table2` t2,
+            `dataset-id.temp_table3` t3
+    ''',
+    destination_dataset_table='dataset-id.result_table',
+    create_disposition='CREATE_IF_NEEDED',
+    write_disposition='WRITE_TRUNCATE',
+    gcp_conn_id='bigquery_default',
+    dag=dag,
+)
+
+# Send email with report
+send_email = EmailOperator(
+    task_id='send_email',
+    to=['recipient1@example.com', 'recipient2@example.com'],
+    subject='GBQ Query Results',
+    html_content='''
+        <h1>GBQ Query Results</h1>
+        <table border="1">
+            <tr>
+                <th>Column 1</th>
+                <th>Column 2</th>
+                <th>Column 3</th>
+                <th>Column 4</th>
+            </tr>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.column1 }}</td>
+                <td>{{ row.column2 }}</td>
+                <td>{{ row.column3 }}</td>
+                <td>{{ row.column4 }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    ''',
+    params={
+        'rows': merge_results.output
+    },
+    dag=dag,
+)
+
+# Dependencies
+query1 >> merge_results
+query2 >> merge_results
+query3 >> merge_results
+merge_results >> send_email
+```
+
+This modified code will merge the results of the three queries and send an email with the report in a table format.
+
+Replace the placeholders with your actual values:
+
+- `project-id`
+- `dataset-id`
+- `view1`, `view2`, `view3`
+- `column1`, `column2`, `column3`
+- `recipient1@example.com`, `recipient2@example.com`
+
+Also, ensure that the `merge_results` task output is correctly passed to the `send_email` task as a parameter.
