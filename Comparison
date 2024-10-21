@@ -1,0 +1,53 @@
+Based on the comparison of the provided stored procedure (`spTimeCopyTimesheetAddTask`) and the generated Spring Boot Java code, here’s the analysis and feedback regarding the alignment between the original SQL functionality and the converted Java code:
+
+### Analysis:
+
+1. **Entity Mapping:**
+   - The Java code defines several entity classes: `PlannedTask`, `PlannedTaskMap`, `PlannedTaskMapEntry`, and `PlannedTaskEntry`, which map to the table-like structures in the SQL procedure.
+   - Each entity class correctly uses the `@Entity` annotation and maps fields to columns, indicating a good alignment with the table structures defined in the SQL.
+   - However, some fields such as `txtTaskData` are present in the Java code, but others related to temporary tables and different task-related fields in the stored procedure are not fully covered.
+
+2. **Repository Layer:**
+   - The DAO interfaces (`PlannedTaskRepository`, `PlannedTaskMapRepository`, etc.) extend `JpaRepository`, which provides standard CRUD operations. This layer aligns with basic data access operations performed in the stored procedure.
+   - The custom DAO implementations seem to be placeholders without actual logic. For example, `findById`, `save`, and `deleteById` methods are implemented but return null or provide no logic, whereas the stored procedure has specific conditional logic and data manipulation.
+
+3. **Service Layer:**
+   - The `PlannedTaskService` is a good abstraction to provide business logic but lacks specific functionalities implemented in the stored procedure. For instance, the SQL script performs multiple checks and complex operations on data, such as using temporary tables, conditional updates, and joins.
+   - The service methods like `savePlannedTask` and `deletePlannedTaskById` are placeholders without any implemented logic to replicate the behavior of the stored procedure.
+
+4. **Conditional Logic and Data Manipulation:**
+   - The stored procedure contains complex logic, such as checking multiple conditions on employee data (`txtEmpNo`, `@dtFromDate`, `@dtToDate`) and updating data in the `TIMETrnUnPlanTask` table.
+   - The Java code does not seem to replicate this conditional logic. For example, handling different user categories (`CANNonExempt`, `CANExempt`, etc.) and performing specific updates based on those conditions is not present.
+   - The procedure also uses temporary tables (`#blUnplannedTaskRow`, `@blUnplannedTaskToCreate`) and manipulates data within these tables, which is not reflected in the Java code.
+
+5. **Use of CTEs and Joins:**
+   - The stored procedure uses Common Table Expressions (CTEs) and joins for filtering and inserting data into `TIMETrnUnPlanTask`. These operations are crucial for the procedure's functionality.
+   - The Java code does not include any equivalent data processing logic for these operations. It lacks methods for executing queries with similar CTE and join operations.
+
+6. **Temporary Table Management:**
+   - The SQL script uses temporary tables extensively for staging data, which are crucial for the logic of the stored procedure.
+   - There is no equivalent mechanism for handling temporary or intermediate data stages in the Java code.
+
+### Coverage Analysis:
+
+- **Entity Mapping (50% Coverage):** The entity classes cover some of the table structures defined in the stored procedure, but many details and field mappings are missing or not properly handled.
+- **Repository Layer (30% Coverage):** The repository interfaces provide a basic structure for data access, but actual logic for data operations from the stored procedure is not implemented.
+- **Service Layer (20% Coverage):** The service class exists as a placeholder but lacks implemented logic for replicating the stored procedure's complex data manipulation and conditional operations.
+- **Conditional Logic and Data Processing (10% Coverage):** The SQL stored procedure's core functionalities—conditional data handling, temporary table manipulation, CTEs, and joins—are not implemented in the Java code.
+
+### Recommendations for Manual Work:
+
+1. **Implement the Conditional Logic:** The service layer should be expanded to handle the various conditions defined in the stored procedure, such as different user categories and their respective updates.
+
+2. **Replicate Data Manipulation Logic:** Add logic in the service methods to replicate the data updates and inserts as performed in the stored procedure. This would involve:
+   - Handling temporary data structures (possibly using in-memory collections or temporary tables in a database).
+   - Performing data manipulations similar to SQL operations (`insert`, `update`, `select`).
+
+3. **Use Query Language for Complex Operations:** Implement custom queries using JPQL or the `@Query` annotation to replicate the CTEs, joins, and other complex data processing.
+
+4. **Add Unit Tests:** Implement unit tests to ensure the logic aligns with the original stored procedure's behavior.
+
+5. **Refactor the Code for Readability:** Clean up placeholder methods and implement real logic for each DAO operation to ensure all CRUD functionalities are properly defined.
+
+### Summary:
+Overall, approximately **30% of the functionality is covered** in the converted Java code, primarily in defining entity mappings and basic repository structures. However, the actual stored procedure logic, including conditional handling, complex data manipulation, and CTE operations, is largely missing and needs to be implemented manually.
