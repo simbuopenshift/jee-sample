@@ -1,0 +1,42 @@
+You can use the following Java code to extract the value from the JSON string and assign it to an integer:
+
+```
+import org.json.JSONObject;
+
+public class Main {
+    public static void main(String[] args) {
+        String jsonString = "{\"source_column_ids\":[12]}";
+        JSONObject jsonObject = new JSONObject(jsonString);
+        int value = jsonObject.getJSONArray("source_column_ids").getInt(0);
+        System.out.println(value);
+    }
+}
+```
+
+In this code:
+
+1. We import the `JSONObject` class from the `org.json` package.
+2. We create a `JSONObject` instance from the JSON string.
+3. We use the `getJSONArray` method to retrieve the array associated with the key "source_column_ids".
+4. We use the `getInt` method to retrieve the integer value at index 0 of the array.
+5. We print the extracted value to the console.
+
+Alternatively, you can use the `String` class's `replaceAll` method to remove the JSON syntax and extract the value:
+
+```
+public class Main {
+    public static void main(String[] args) {
+        String jsonString = "{\"source_column_ids\":[12]}";
+        int value = Integer.parseInt(jsonString.replaceAll("\\D+",""));
+        System.out.println(value);
+    }
+}
+```
+
+In this code:
+
+1. We use the `replaceAll` method to remove all non-digit characters from the JSON string.
+2. We use the `Integer.parseInt` method to parse the resulting string into an integer.
+3. We print the extracted value to the console.
+
+However, this approach assumes that the JSON string has a simple structure and that the value is an integer. The first approach using `JSONObject` is more robust and flexible.
