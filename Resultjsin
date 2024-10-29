@@ -1,0 +1,54 @@
+You're correct that the `getSourceColumnId()` from `feedDefaultMappingRepository.getFeedDefaultMapping()` could potentially return `null` from the database. Here's how you can modify the code to handle this:
+
+```
+feedConfigs = feedConfigs.stream()
+        .filter(e -> e.getFeedDestination() != null && e.getFeedMapping() != null 
+                && e.getFeedDestination().getTargetFileType() != null 
+                && e.getFeedDestination().getTargetFileType().equalsIgnoreCase("ACES") 
+                && e.getFeedDestination().getTargetFileFormat().equals(DestinationFileFormat.XML) 
+                && !clientId.equalsIgnoreCase("CFM_WORKFLOW"))
+        .map(e -> {
+            e.getFeedMapping().removeIf(s -> {
+                FeedDefaultMapping defaultMapping = feedDefaultMappingRepository.getFeedDefaultMapping(FeedManagerServiceUtil.getSourceColumnId(s.getSourceColumnIds()));
+                return (s.getExcludeDefaultMapping() != null && s.getExcludeDefaultMapping().equals(false)) 
+                       || (defaultMapping != null && defaultMapping.getSourceColumnId() != null 
+                           && defaultMapping.getSourceColumnId().equals(FeedManagerServiceUtil.getSourceColumnId(s.getSourceColumnIds())));
+            });
+            return e;
+        })
+        .collect(Collectors.toList());
+```
+
+In the modified code:
+
+1. We first retrieve the `FeedDefaultMapping` object from the repository.
+2. We then check if `defaultMapping` and its `getSourceColumnId()` are not `null` before attempting to compare the IDs.
+
+Alternatively, you can use `Optional` to handle the potential `null` values:
+
+```
+feedConfigs = feedConfigs.stream()
+        .filter(e -> e.getFeedDestination() != null && e.getFeedMapping() != null 
+                && e.getFeedDestination().getTargetFileType() != null 
+                && e.getFeedDestination().getTargetFileType().equalsIgnoreCase("ACES") 
+                && e.getFeedDestination().getTargetFileFormat().equals(DestinationFileFormat.XML) 
+                && !clientId.equalsIgnoreCase("CFM_WORKFLOW"))
+        .map(e -> {
+            e.getFeedMapping().removeIf(s -> {
+                return (s.getExcludeDefaultMapping() != null && s.getExcludeDefaultMapping().equals(false)) 
+                       || Optional.ofNullable(feedDefaultMappingRepository.getFeedDefaultMapping(FeedManagerServiceUtil.getSourceColumnId(s.getSourceColumnIds())))
+                               .map(FeedDefaultMapping::getSourceColumnId)
+                               .filter(id -> id != null && id.equals(FeedManagerServiceUtil.getSourceColumnId(s.getSourceColumnIds())))
+                               .isPresent();
+            });
+            return e;
+        })
+        .collect(Collectors.toList());
+```
+
+In this version:
+
+1. We use `Optional.ofNullable` to wrap the potentially `null` `FeedDefaultMapping` object.
+2. We then chain `map` and `filter` operations to safely navigate the object graph and perform the comparison.
+
+Both approaches ensure that your code handles `null` values safely and avoids potential `NullPointerExceptions`.
