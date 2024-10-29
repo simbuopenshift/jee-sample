@@ -40,3 +40,69 @@ In this code:
 3. We print the extracted value to the console.
 
 However, this approach assumes that the JSON string has a simple structure and that the value is an integer. The first approach using `JSONObject` is more robust and flexible.
+Here's an updated version of the code that uses regular expressions to extract the value between the square brackets, regardless of any additional spaces or formatting in the JSON string:
+
+```
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class Main {
+    public static void main(String[] args) {
+        String jsonString = "{\"source_column_ids\":[12]}";
+        // Regular expression pattern to match the value between square brackets
+        Pattern pattern = Pattern.compile("\\[(\\d+)\\]");
+        Matcher matcher = pattern.matcher(jsonString);
+        
+        if (matcher.find()) {
+            int value = Integer.parseInt(matcher.group(1));
+            System.out.println(value);
+        } else {
+            System.out.println("No match found.");
+        }
+    }
+}
+```
+
+In this updated code:
+
+1. We import `java.util.regex.Matcher` and `java.util.regex.Pattern` to work with regular expressions.
+2. We define a regular expression pattern `\\[(\\d+)\\]` to match one or more digits (`\\d+`) surrounded by square brackets (`\\[` and `\\]`).
+3. We use `Matcher` to search for the pattern in the JSON string.
+4. If a match is found, we extract the value using `matcher.group(1)` (the first capturing group, which is the value within the brackets) and parse it into an integer.
+5. We print the extracted value or a message indicating no match was found.
+
+This approach provides more flexibility in handling varying JSON string formats and ensures that only the value between the square brackets is extracted.
+
+Alternatively, if you prefer to use the `JSONObject` approach and want to make it more dynamic, you can iterate through the JSON object's keys and values:
+
+```
+import org.json.JSONObject;
+
+public class Main {
+    public static void main(String[] args) {
+        String jsonString = "{\"source_column_ids\":[12]}";
+        JSONObject jsonObject = new JSONObject(jsonString);
+        
+        for (String key : jsonObject.keySet()) {
+            Object value = jsonObject.get(key);
+            if (value instanceof org.json.JSONArray) {
+                org.json.JSONArray array = (org.json.JSONArray) value;
+                for (int i = 0; i < array.length(); i++) {
+                    if (array.get(i) instanceof Integer) {
+                        System.out.println(array.getInt(i));
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+In this code:
+
+1. We iterate through the JSON object's keys using `jsonObject.keySet()`.
+2. For each key, we check if its value is a `JSONArray`.
+3. If it's an array, we iterate through its elements and check if they are integers.
+4. We print the integer values.
+
+This approach allows you to dynamically handle JSON objects with varying structures and extract integer values from arrays.
