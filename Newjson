@@ -1,0 +1,90 @@
+Here's the modified code to handle multiple comma-separated values within square brackets:
+
+```
+import org.json.JSONObject;
+
+public class Main {
+    public static void main(String[] args) {
+        String jsonString = "{\"source_column_ids\":[1, 2, 3]}";
+        JSONObject jsonObject = new JSONObject(jsonString);
+        
+        for (String key : jsonObject.keySet()) {
+            Object value = jsonObject.get(key);
+            if (value instanceof org.json.JSONArray) {
+                org.json.JSONArray array = (org.json.JSONArray) value;
+                System.out.println("Values for key: " + key);
+                for (int i = 0; i < array.length(); i++) {
+                    if (array.get(i) instanceof Integer) {
+                        System.out.println(array.getInt(i));
+                    } else if (array.get(i) instanceof String) {
+                        System.out.println(array.getString(i));
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+To make it more generic, consider using a separate method to handle the JSONArray:
+
+```
+import org.json.JSONObject;
+
+public class Main {
+    public static void main(String[] args) {
+        String jsonString = "{\"source_column_ids\":[1, 2, 3]}";
+        JSONObject jsonObject = new JSONObject(jsonString);
+        
+        for (String key : jsonObject.keySet()) {
+            Object value = jsonObject.get(key);
+            if (value instanceof org.json.JSONArray) {
+                handleJSONArray((org.json.JSONArray) value, key);
+            }
+        }
+    }
+    
+    private static void handleJSONArray(org.json.JSONArray array, String key) {
+        System.out.println("Values for key: " + key);
+        for (int i = 0; i < array.length(); i++) {
+            Object value = array.get(i);
+            if (value instanceof Integer) {
+                System.out.println((Integer) value);
+            } else if (value instanceof String) {
+                System.out.println((String) value);
+            } else {
+                System.out.println("Unsupported value type: " + value.getClass().getName());
+            }
+        }
+    }
+}
+```
+
+This way, you can easily reuse the `handleJSONArray` method for other JSONArrays.
+
+*Using Java 8 Streams*:
+
+```
+import org.json.JSONObject;
+
+public class Main {
+    public static void main(String[] args) {
+        String jsonString = "{\"source_column_ids\":[1, 2, 3]}";
+        JSONObject jsonObject = new JSONObject(jsonString);
+        
+        jsonObject.keySet().stream()
+                .map(key -> jsonObject.get(key))
+                .filter(value -> value instanceof org.json.JSONArray)
+                .map(value -> (org.json.JSONArray) value)
+                .forEach(array -> handleJSONArray(array));
+    }
+    
+    private static void handleJSONArray(org.json.JSONArray array) {
+        IntStream.range(0, array.length())
+                .mapToObj(index -> array.get(index))
+                .forEach(value -> System.out.println(value));
+    }
+}
+```
+
+This version uses Java 8 Streams to iterate over the JSONObject's keys and values.
