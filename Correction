@@ -1,1 +1,57 @@
-,,, 
+The issue is that the `filter` method is removing all elements that don't match the `ACES` condition. To skip the entire logic when `targetFileType` is not `ACES`, you can add a conditional statement before the `stream` operation.
+
+Here's the modified code:
+
+```
+if (!clientId.equalsIgnoreCase("test")) {
+    boolean isACES = feedConfigs.stream()
+            .anyMatch(e -> e.getFeedDestination() != null 
+                    && e.getFeedDestination().getTargetFileType() != null 
+                    && e.getFeedDestination().getTargetFileType().equalsIgnoreCase("ACES"));
+
+    if (isACES) {
+        feedConfigs = feedConfigs.stream()
+                .filter(e -> e.getFeedDestination() != null && e.getFeedMapping() != null 
+                        && e.getFeedDestination().getTargetFileType() != null 
+                        && e.getFeedDestination().getTargetFileType().equalsIgnoreCase("ACES") 
+                        && e.getFeedDestination().getTargetFileFormat().equals(DestinationFileFormat.XML))
+                .map(e -> {
+                    e.getFeedMapping().removeIf(s -> {
+                        FeedDefaultMapping defaultMapping = feedDefaultMappingRepository.getFeedDefaultMapping(
+                                FeedManagerServiceUtil.getSourceColumnId(s.getSourceColumnIds()), 
+                                BigDecimal.valueOf(Double.parseDouble(e.getFeedDestination().getTargetFileVersion())));
+                        return (defaultMapping != null && defaultMapping.getSourceColumnId() != null 
+                                && defaultMapping.getSourceColumnId().equals(FeedManagerServiceUtil.getSourceColumnId(s.getSourceColumnIds()))
+                                && (! Boolean.TRUE.equals(s.getExcludeDefaultMapping())));
+                    });
+                    return e;
+                })
+                .collect(Collectors.toList());
+    }
+}
+``"
+
+Alternatively, you can use a single `stream` operation with an `if` condition inside the `map` method:
+
+```java
+if (!clientId.equalsIgnoreCase("test")) {
+    feedConfigs = feedConfigs.stream()
+            .map(e -> {
+                if (e.getFeedDestination() != null 
+                        && e.getFeedDestination().getTargetFileType() != null 
+                        && e.getFeedDestination().getTargetFileType().equalsIgnoreCase("ACES") 
+                        && e.getFeedDestination().getTargetFileFormat().equals(DestinationFileFormat.XML)) {
+                    e.getFeedMapping().removeIf(s -> {
+                        FeedDefaultMapping defaultMapping = feedDefaultMappingRepository.getFeedDefaultMapping(
+                                FeedManagerServiceUtil.getSourceColumnId(s.getSourceColumnIds()), 
+                                BigDecimal.valueOf(Double.parseDouble(e.getFeedDestination().getTargetFileVersion())));
+                        return (defaultMapping != null && defaultMapping.getSourceColumnId() != null 
+                                && defaultMapping.getSourceColumnId().equals(FeedManagerServiceUtil.getSourceColumnId(s.getSourceColumnIds()))
+                                && (! Boolean.TRUE.equals(s.getExcludeDefaultMapping())));
+                    });
+                }
+                return e;
+            })
+            .collect(Collectors.toList());
+}
+```,,, 
